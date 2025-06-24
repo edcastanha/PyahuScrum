@@ -1,0 +1,29 @@
+.activityItem {
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.activityHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.activityTitle {
+  font-weight: 500;
+  color: #0F172A;
+}
+
+.activityTimestamp {
+  font-size: 0.85rem;
+  color: #94A3B8;
+}
+
+.activityMessage {
+  font-size: 0.9rem;
+  color: #64748B;
+}

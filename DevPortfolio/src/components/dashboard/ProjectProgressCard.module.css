@@ -1,36 +1,71 @@
 .card {
-    background-color: #1e293b;
-    border-radius: 8px;
-    padding: 16px;
-    color: #cbd5e1;
-    margin-bottom: 16px;
-  }
-  
-  .card h4 {
-    margin-top: 0;
-    margin-bottom: 16px;
-    font-size: 16px;
-    color: #f1f5f9;
-  }
-  
-  .progressBarContainer {
-    background-color: #334155;
-    border-radius: 4px;
-    height: 8px;
-    width: 100%;
-    margin-bottom: 8px;
-  }
-  
-  .progressBar {
-    background-color: #38bdf8;
-    height: 100%;
-    border-radius: 4px;
-  }
-  
-  .details {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: #94a3b8;
-  }
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #3B82F6;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.cardHeader span:first-child {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #0F172A;
+}
+
+.status {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.active {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.completed {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: #64748B;
+  margin-bottom: 0.75rem;
+}
+
+.progressBarContainer {
+  height: 0.5rem;
+  background-color: #e2e8f0;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: #3B82F6;
+  border-radius: 0.25rem;
+}
+
+.progressText {
+  font-size: 0.75rem;
+  color: #64748B;
+  text-align: right;
+}
   

@@ -7,4 +7,11 @@
   flex-grow: 1;
   height: 100vh;
   overflow-y: auto; /* Permite scroll apenas no conteúdo */
+  padding-bottom: 2rem; /* Espaço no final da página */
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding-top: 60px; /* Espaço para o botão de toggle */
+  }
 }

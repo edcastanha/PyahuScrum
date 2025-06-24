@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 import { 
@@ -7,12 +7,41 @@ import {
   Clock, 
   FileText, 
   Github, 
-  Code2 
+  Code2, 
+  Menu, 
+  X 
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detecta se a tela é móvel
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
+  
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+  
   return (
-    <aside className={styles.sidebar}>
+    <>
+      {isMobile && (
+        <button className={styles.toggleButton} onClick={toggleSidebar}>
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      )}
+      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
       <div className={styles.logo}>
         <Code2 />
         <span>DevPortfolio</span>
@@ -48,6 +77,7 @@ const Sidebar: React.FC = () => {
         </div>
       </footer>
     </aside>
+    </>
   );
 };
 
