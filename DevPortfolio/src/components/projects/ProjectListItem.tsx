@@ -5,9 +5,10 @@ import styles from './ProjectListItem.module.css';
 interface ProjectListItemProps {
   project: Project;
   onEdit: (project: Project) => void;
+  onDelete?: (id: number) => void;
 }
 
-const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit }) => {
+const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit, onDelete }) => {
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'active':
@@ -29,7 +30,14 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit }) =>
           <span className={`${styles.status} ${getStatusClass(project.status)}`}>
             {project.status}
           </span>
-          <button onClick={() => onEdit(project)} className={styles.editButton}>Editar</button>
+          <div className={styles.buttonGroup}>
+            <button onClick={() => onEdit(project)} className={styles.editButton}>Editar</button>
+            {onDelete && (
+              <button onClick={() => onDelete(project.id)} className={styles.deleteButton}>
+                Excluir
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <p>{project.description}</p>

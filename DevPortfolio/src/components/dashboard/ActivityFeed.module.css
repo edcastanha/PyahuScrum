@@ -11,19 +11,27 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+  align-items: center;
 }
 
 .activityTitle {
-  font-weight: 500;
+  font-weight: 600;
   color: #0F172A;
+  font-size: 0.95rem;
 }
 
 .activityTimestamp {
   font-size: 0.85rem;
   color: #94A3B8;
+  text-align: right;
+}
+
+.activityContent {
+  margin-top: 0.25rem;
 }
 
 .activityMessage {
   font-size: 0.9rem;
   color: #64748B;
+  line-height: 1.4;
 }

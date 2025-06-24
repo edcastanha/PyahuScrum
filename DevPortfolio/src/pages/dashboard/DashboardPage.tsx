@@ -1,125 +1,142 @@
 import React, { useState, useEffect } from 'react';
+import { Activity } from '../../entities/Activity';
+import { Project } from '../../entities/Project';
+import { projectService } from '../../services/project/projectService';
+import { activityService } from '../../services/activity/activityService';
+import { useToast } from '../../context/ToastContext';
 import StatCard from '../../components/dashboard/StatCard';
 import ProjectProgressCard from '../../components/dashboard/ProjectProgressCard';
 import ActivityFeed from '../../components/dashboard/ActivityFeed';
+import QuickActions from '../../components/dashboard/QuickActions';
+import TechDistribution from '../../components/dashboard/TechDistribution';
+import { BarChart, FileCode, RefreshCcw, LayoutGrid } from 'lucide-react';
 import styles from './DashboardPage.module.css';
-import { FolderKanban, CheckCircle, ListTodo, FileText } from 'lucide-react';
-import { Project } from '../../entities/Project';
-import { Activity } from '../../entities/Activity';
-import { mockProjects } from '../../services/mock/projectMock';
-import { mockActivities } from '../../services/mock/activityMock';
 
 const DashboardPage: React.FC = () => {
-  // Os dados virão do backend no futuro.
-  const [stats, setStats] = useState([
-    {
-      icon: FolderKanban,
-      label: 'Total de Projetos',
-      value: '0',
-      details: '',
-      iconBgColor: '#3B82F6',
-    },
-    {
-      icon: CheckCircle,
-      label: 'Projetos Concluídos',
-      value: '0',
-      details: '',
-      iconBgColor: '#10B981',
-    },
-    {
-      icon: ListTodo,
-      label: 'Stories Ativas',
-      value: '0',
-      details: '',
-      iconBgColor: '#F59E0B',
-    },
-    {
-      icon: FileText,
-      label: 'ADRs Documentados',
-      value: '0',
-      details: '',
-      iconBgColor: '#8B5CF6',
-    },
-  ]);
-
-  const [activeProjects, setActiveProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  
-  // Carregar dados mock
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    completedProjects: 0,
+    activeStories: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
+
+  const loadData = () => {
+    setIsLoading(true);
+
+    // Carregar projetos
+    const loadedProjects = projectService.getProjects();
+    setProjects(loadedProjects);
+
+    // Carregar atividades
+    const loadedActivities = activityService.getActivities();
+    setActivities(loadedActivities);
+
+    // Carregar estatísticas
+    const projectStats = projectService.getProjectStats();
+    const activityStats = activityService.getActivityStats();
+    
+    setStats({
+      totalProjects: projectStats.total,
+      completedProjects: projectStats.completed,
+      activeStories: activityStats.activeStories,
+    });
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    // Filtrar apenas projetos ativos
-    const filteredProjects = mockProjects.filter(project => project.status === 'active');
-    setActiveProjects(filteredProjects);
+    loadData();
     
-    // Carregar dados de atividades
-    setActivities(mockActivities);
+    // Adicionar listener para atualização de projetos
+    const handleProjectsUpdated = () => {
+      loadData();
+    };
     
-    // Atualizar estatísticas
-    const totalProjects = mockProjects.length;
-    const completedProjects = mockProjects.filter(p => p.status === 'completed').length;
-    const activeStories = 5; // Valor simulado para user stories
-    const documentedADRs = 0; // Valor simulado para ADRs
+    window.addEventListener('projectsUpdated', handleProjectsUpdated);
     
-    // Usando atualização funcional para não depender de 'stats' como dependência
-    setStats(currentStats => [
-      {
-        ...currentStats[0],
-        value: totalProjects.toString(),
-      },
-      {
-        ...currentStats[1],
-        value: completedProjects.toString(),
-      },
-      {
-        ...currentStats[2],
-        value: activeStories.toString(),
-      },
-      {
-        ...currentStats[3],
-        value: documentedADRs.toString(),
-      },
-    ]);
+    // Limpeza ao desmontar
+    return () => {
+      window.removeEventListener('projectsUpdated', handleProjectsUpdated);
+    };
   }, []);
+
+  const handleRefresh = () => {
+    loadData();
+    showToast('info', 'Dashboard atualizado com sucesso!');
+  };
 
   return (
     <div className={styles.dashboardPage}>
-      <header className={styles.header}>
-        <div>
-          <h1>Dashboard Profissional</h1>
-          <p>Gerencie seus projetos Full Stack, documentação e histórias de usuário em um só lugar</p>
-        </div>
-        <button className={styles.addButton} onClick={() => window.location.href = '/projects'}>
-          + Novo Projeto
+      <div className={styles.dashboardHeader}>
+        <h1>Dashboard</h1>
+        <button className={styles.refreshButton} onClick={handleRefresh}>
+          <RefreshCcw size={16} />
+          <span>Atualizar</span>
         </button>
-      </header>
-      <div className={styles.statsGrid}>
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            icon={stat.icon}
-            label={stat.label}
-            value={stat.value}
-            details={stat.details}
-            iconBgColor={stat.iconBgColor}
-          />
-        ))}
       </div>
-      <div className={styles.mainContent}>
-        <div className={styles.leftColumn}>
-          <h2>Progresso dos Projetos</h2>
-          {activeProjects.length > 0 ? (
-            activeProjects.map((project) => (
-              <ProjectProgressCard key={project.id} project={project} />
-            ))
-          ) : (
-            <p>Nenhum projeto ativo no momento.</p>
-          )}
-        </div>
-        <div className={styles.rightColumn}>
-          <h2>Feed de Atividades</h2>
-          <ActivityFeed activities={activities} />
-        </div>
-      </div>
+
+      {isLoading ? (
+        <div className={styles.loadingState}>Carregando dados...</div>
+      ) : (
+        <>
+          <div className={styles.statsSection}>
+            <StatCard
+              icon={LayoutGrid}
+              label="Total de Projetos"
+              value={stats.totalProjects.toString()}
+              details="Projetos cadastrados"
+              iconBgColor="#3B82F6"
+            />
+            <StatCard
+              icon={BarChart}
+              label="Projetos Concluídos"
+              value={stats.completedProjects.toString()}
+              details={`${stats.totalProjects > 0 ? Math.round((stats.completedProjects / stats.totalProjects) * 100) : 0}% da carteira`}
+              iconBgColor="#10B981"
+            />
+            <StatCard
+              icon={FileCode}
+              label="Histórias Ativas"
+              value={stats.activeStories.toString()}
+              details="Em desenvolvimento"
+              iconBgColor="#F59E0B"
+            />
+          </div>
+
+          <div className={styles.mainContent}>
+            <div className={styles.leftColumn}>
+              <div className={styles.projectsSection}>
+                <h2>Projetos em Andamento</h2>
+                <div className={styles.projectsList}>
+                  {projects
+                    .filter(project => project.status === 'active')
+                    .map(project => (
+                      <ProjectProgressCard key={project.id} project={project} />
+                    ))}
+                </div>
+              </div>
+              
+              <div className={styles.techSection}>
+                <TechDistribution />
+              </div>
+            </div>
+            
+            <div className={styles.rightColumn}>
+              <div className={styles.quickActionsSection}>
+                <QuickActions />
+              </div>
+              
+              <div className={styles.activitySection}>
+                <h2>Atividade Recente</h2>
+                <ActivityFeed activities={activities} />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

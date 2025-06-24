@@ -22,7 +22,7 @@ export const mockProjects: Project[] = [
     status: 'completed',
     progress: 100,
   },
-    {
+  {
     id: 4,
     name: 'Blog Pessoal com Next.js',
     description: 'Desenvolver um blog pessoal usando Next.js para renderização do lado do servidor.',

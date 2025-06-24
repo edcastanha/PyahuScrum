@@ -51,8 +51,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities }) => {
               {formatDate(activity.timestamp)}
             </div>
           </div>
-          <div className={styles.activityMessage}>
-            {activity.message}
+          <div className={styles.activityContent}>
+            <div className={styles.activityMessage}>
+              {activity.message}
+            </div>
           </div>
         </div>
       ))}
