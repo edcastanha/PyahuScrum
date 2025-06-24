@@ -1,0 +1,61 @@
+{
+  "name": "ADR",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Título da decisão arquitetural"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "ID do projeto relacionado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "deprecated",
+        "superseded"
+      ],
+      "default": "proposed",
+      "description": "Status da decisão"
+    },
+    "context": {
+      "type": "string",
+      "description": "Contexto que levou à decisão"
+    },
+    "decision": {
+      "type": "string",
+      "description": "A decisão tomada"
+    },
+    "consequences": {
+      "type": "string",
+      "description": "Consequências da decisão"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Racional por trás da decisão"
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alternativas consideradas"
+    },
+    "decision_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da decisão"
+    }
+  },
+  "required": [
+    "title",
+    "project_id",
+    "context",
+    "decision",
+    "consequences"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "name": "UserStory",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Título da história de usuário"
+    },
+    "description": {
+      "type": "string",
+      "description": "Como [usuário], eu quero [funcionalidade] para que [benefício]"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "ID do projeto relacionado"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Prioridade da história"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "backlog",
+        "to_do",
+        "in_progress",
+        "review",
+        "done"
+      ],
+      "default": "backlog",
+      "description": "Status da história"
+    },
+    "story_points": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 13,
+      "description": "Pontos de história (Fibonacci)"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Critérios de aceitação"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Desenvolvedor responsável"
+    },
+    "epic": {
+      "type": "string",
+      "description": "Epic ou tema relacionado"
+    },
+    "sprint": {
+      "type": "string",
+      "description": "Sprint relacionada"
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "project_id"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do projeto"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrição detalhada do projeto"
+    },
+    "technology": {
+      "type": "string",
+      "enum": [
+        "React",
+        "Angular",
+        "Django",
+        "Full Stack"
+      ],
+      "description": "Tecnologia principal do projeto"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "development",
+        "testing",
+        "completed",
+        "deployed"
+      ],
+      "default": "planning",
+      "description": "Status atual do projeto"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Prioridade do projeto"
+    },
+    "repository_url": {
+      "type": "string",
+      "description": "URL do repositório GitHub"
+    },
+    "demo_url": {
+      "type": "string",
+      "description": "URL da demonstração/deploy"
+    },
+    "readme_content": {
+      "type": "string",
+      "description": "Conteúdo do README.md"
+    },
+    "completion_percentage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 0,
+      "description": "Porcentagem de conclusão"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de início do projeto"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista de conclusão"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags do projeto"
+    }
+  },
+  "required": [
+    "name",
+    "technology"
+  ]
+}

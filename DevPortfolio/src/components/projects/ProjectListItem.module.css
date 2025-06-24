@@ -1,0 +1,50 @@
+.card {
+  background-color: #1e293b;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.completed {
+  background-color: #10b981;
+  color: white;
+}
+
+.inactive {
+  background-color: #64748b;
+  color: white;
+}
+
+.progressBarContainer {
+  background-color: #334155;
+  border-radius: 4px;
+  height: 8px;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.progressBar {
+  background-color: #3b82f6;
+  height: 100%;
+  border-radius: 4px;
+}

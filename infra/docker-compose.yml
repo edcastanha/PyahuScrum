@@ -5,7 +5,7 @@ services:
       dockerfile: infra/Dockerfile
     container_name: devportfolio-frontend
     ports:
-      - "3000:3000"
+      - "5000:3000"
     volumes:
       - ../DevPortfolio/:/app
       - /app/node_modules

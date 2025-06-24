@@ -1,0 +1,88 @@
+.sidebar {
+  background-color: #fff;
+  color: #64748B;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  height: 100vh;
+  border-right: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 2rem;
+}
+
+.navHeader {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 1.5rem 0 0.5rem;
+  font-weight: 500;
+}
+
+.navigation a, .quickLinks a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #64748B;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.navigation a:hover, .quickLinks a:hover {
+  background-color: #f1f5f9;
+}
+
+.navigation a.active {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.quickLinks {
+  margin-top: auto; /* Pushes footer down */
+}
+
+.footer {
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #10B981;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.profileInfo p {
+    margin: 0;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+.profileInfo span {
+    font-size: 0.875rem;
+    color: #64748B;
+}

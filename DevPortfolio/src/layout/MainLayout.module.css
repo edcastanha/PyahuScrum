@@ -1,0 +1,10 @@
+.mainLayout {
+  display: flex;
+  background-color: #f8fafc; /* Cor de fundo geral */
+}
+
+.content {
+  flex-grow: 1;
+  height: 100vh;
+  overflow-y: auto; /* Permite scroll apenas no conteúdo */
+}
