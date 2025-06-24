@@ -19,9 +19,9 @@ Este documento detalha as fases e tarefas para a implementação da aplicação 
 - [x] **Tarefa 2.1:** Desenvolver o componente `DashboardPage`.
 - [x] **Tarefa 2.2:** Criar componentes de card para projetos (`ProjectCard`) e métricas (`MetricCard`).
 - [x] **Tarefa 2.3:** Utilizar dados mockados para popular o dashboard.
-- [ ] **Tarefa 2.4:** Criar a página de listagem de projetos (`ProjectsPage`).
-- [ ] **Tarefa 2.5:** Implementar um formulário para adicionar e editar projetos.
-- [ ] **Tarefa 2.6:** Conectar o formulário para criar/atualizar a lista de projetos (ainda com dados mockados ou estado local).
+- [x] **Tarefa 2.4:** Criar a página de listagem de projetos (`ProjectsPage`).
+- [x] **Tarefa 2.5:** Implementar um formulário para adicionar e editar projetos.
+- [x] **Tarefa 2.6:** Conectar o formulário para criar/atualizar a lista de projetos (ainda com dados mockados ou estado local).
 
 ## Fase 3: Documentação Interativa (Sprint 3)
 

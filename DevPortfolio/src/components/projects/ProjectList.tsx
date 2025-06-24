@@ -5,13 +5,14 @@ import styles from './ProjectList.module.css';
 
 interface ProjectListProps {
   projects: Project[];
+  onEdit: (project: Project) => void;
 }
 
-const ProjectList: React.FC<ProjectListProps> = ({ projects }) => {
+const ProjectList: React.FC<ProjectListProps> = ({ projects, onEdit }) => {
   return (
     <div className={styles.listContainer}>
       {projects.map((project) => (
-        <ProjectListItem key={project.id} project={project} />
+        <ProjectListItem key={project.id} project={project} onEdit={onEdit} />
       ))}
     </div>
   );

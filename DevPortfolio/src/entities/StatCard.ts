@@ -1,8 +1,7 @@
-import { ReactNode } from 'react';
-import { IconType } from 'react-icons';
+import { ReactNode, ElementType } from 'react';
 
 export interface StatCardProps {
-  icon: IconType | ReactNode;
+  icon: ElementType | ReactNode;
   label: string;
   value: string;
   details?: string;

@@ -4,9 +4,10 @@ import styles from './ProjectListItem.module.css';
 
 interface ProjectListItemProps {
   project: Project;
+  onEdit: (project: Project) => void;
 }
 
-const ProjectListItem: React.FC<ProjectListItemProps> = ({ project }) => {
+const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit }) => {
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'active':
@@ -24,9 +25,12 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project }) => {
     <div className={styles.card}>
       <div className={styles.cardHeader}>
         <h3>{project.name}</h3>
-        <span className={`${styles.status} ${getStatusClass(project.status)}`}>
-          {project.status}
-        </span>
+        <div className={styles.headerActions}>
+          <span className={`${styles.status} ${getStatusClass(project.status)}`}>
+            {project.status}
+          </span>
+          <button onClick={() => onEdit(project)} className={styles.editButton}>Editar</button>
+        </div>
       </div>
       <p>{project.description}</p>
       <div className={styles.progressBarContainer}>

@@ -2,35 +2,35 @@ import React, { useState } from 'react';
 import StatCard from '../../components/dashboard/StatCard';
 import ProjectProgressCard from '../../components/dashboard/ProjectProgressCard';
 import styles from './DashboardPage.module.css';
-import { FaProjectDiagram, FaCheckCircle, FaTasks, FaFileAlt } from 'react-icons/fa';
+import { FolderKanban, CheckCircle, ListTodo, FileText } from 'lucide-react';
 import { Project } from '../../entities/Project';
 
 const DashboardPage: React.FC = () => {
   // Os dados virão do backend no futuro.
   const [stats] = useState([
     {
-      icon: FaProjectDiagram,
+      icon: FolderKanban,
       label: 'Total de Projetos',
       value: '0',
       details: '',
       iconBgColor: '#3B82F6',
     },
     {
-      icon: FaCheckCircle,
+      icon: CheckCircle,
       label: 'Projetos Concluídos',
       value: '0',
       details: '',
       iconBgColor: '#10B981',
     },
     {
-      icon: FaTasks,
+      icon: ListTodo,
       label: 'Stories Ativas',
       value: '0',
       details: '',
       iconBgColor: '#F59E0B',
     },
     {
-      icon: FaFileAlt,
+      icon: FileText,
       label: 'ADRs Documentados',
       value: '0',
       details: '',
