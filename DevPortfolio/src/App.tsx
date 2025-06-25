@@ -7,7 +7,8 @@ import UserStoriesPage from './pages/user-stories/UserStoriesPage';
 import { ToastProvider } from './context/ToastContext';
 import './App.css';
 
-import DocumentationPage from './pages/documentation/DocumentationPage';
+// Placeholder para a página de documentação
+const DocumentationPage = () => <div>Página de Documentação</div>;
 
 
 function App() {
