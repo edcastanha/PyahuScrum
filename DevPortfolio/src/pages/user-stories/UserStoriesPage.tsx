@@ -97,20 +97,37 @@ const UserStoriesPage: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quadro Kanban de Histórias de Usuário</h1>
-        <button 
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            handleOpenForm();
-          }}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
-        >
-          Adicionar História
-        </button>
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Histórias de Usuário</h1>
+            <p className="text-sm text-gray-600">
+              Gerencie e organize as histórias de usuário do projeto usando o quadro Kanban
+            </p>
+          </div>
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              handleOpenForm();
+            }}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Nova História
+          </button>
+        </div>
       </div>
-      <KanbanBoardDebug stories={stories} onDragEnd={handleDragEnd} onEditStory={handleOpenForm} />
+
+      {/* Kanban Board */}
+      <div className="px-6">
+        <KanbanBoardDebug stories={stories} onDragEnd={handleDragEnd} onEditStory={handleOpenForm} />
+      </div>
+
+      {/* Modal do Formulário */}
       {isFormOpen && (
         <UserStoryFormDebug
           story={editingStory}

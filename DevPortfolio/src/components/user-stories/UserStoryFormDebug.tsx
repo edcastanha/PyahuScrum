@@ -188,13 +188,44 @@ const UserStoryFormDebug: React.FC<UserStoryFormDebugProps> = ({
       padding: '1rem'
     }}>
       <div style={formStyle}>
-        <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
-          {story ? 'Editar História' : 'Nova História de Usuário'}
-        </h2>
+        {/* Header */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: '2rem',
+          borderBottom: '1px solid #e5e7eb',
+          paddingBottom: '1rem'
+        }}>
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 'bold',
+            color: '#111827',
+            margin: 0
+          }}>
+            {story ? 'Editar História' : 'Nova História de Usuário'}
+          </h2>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              color: '#6b7280',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              borderRadius: '0.375rem',
+              lineHeight: 1
+            }}
+          >
+            ×
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
               Título *
             </label>
             <input
@@ -207,33 +238,50 @@ const UserStoryFormDebug: React.FC<UserStoryFormDebugProps> = ({
               }}
               placeholder="Como usuário, eu quero..."
             />
-            {errors.title && <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.title}</p>}
+            {errors.title && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.title}</p>}
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              Projeto *
-            </label>
-            <select
-              value={formData.projectId}
-              onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
-              style={{
-                ...inputStyle,
-                borderColor: errors.projectId ? '#ef4444' : '#d1d5db'
-              }}
-            >
-              <option value="">Selecione um projeto</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id.toString()}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-            {errors.projectId && <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.projectId}</p>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                Projeto *
+              </label>
+              <select
+                value={formData.projectId}
+                onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.projectId ? '#ef4444' : '#d1d5db'
+                }}
+              >
+                <option value="">Selecione um projeto</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id.toString()}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              {errors.projectId && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.projectId}</p>}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                Prioridade
+              </label>
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as any }))}
+                style={inputStyle}
+              >
+                <option value="low">⬇️ Baixa</option>
+                <option value="medium">➡️ Média</option>
+                <option value="high">⬆️ Alta</option>
+              </select>
+            </div>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
               Descrição *
             </label>
             <textarea
@@ -247,81 +295,109 @@ const UserStoryFormDebug: React.FC<UserStoryFormDebugProps> = ({
               }}
               placeholder="Descreva detalhadamente a história..."
             />
-            {errors.description && <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.description}</p>}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                style={inputStyle}
-              >
-                <option value="todo">A Fazer</option>
-                <option value="inprogress">Em Progresso</option>
-                <option value="done">Concluído</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                Prioridade
-              </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as any }))}
-                style={inputStyle}
-              >
-                <option value="low">Baixa</option>
-                <option value="medium">Média</option>
-                <option value="high">Alta</option>
-              </select>
-            </div>
+            {errors.description && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.description}</p>}
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              Critérios de Aceite *
-            </label>
-            {formData.acceptanceCriteria.map((criteria, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <input
-                  type="text"
-                  value={criteria}
-                  onChange={(e) => updateCriteria(index, e.target.value)}
-                  style={{ ...inputStyle, marginBottom: 0, marginRight: '0.5rem' }}
-                  placeholder={`Critério ${index + 1}`}
-                />
-                {formData.acceptanceCriteria.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeCriteria(index)}
-                    style={removeButtonStyle}
-                  >
-                    Remover
-                  </button>
-                )}
-              </div>
-            ))}
-            {errors.acceptanceCriteria && <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.acceptanceCriteria}</p>}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <label style={{ fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                Critérios de Aceite *
+              </label>
+              <button
+                type="button"
+                onClick={addCriteria}
+                style={{
+                  ...addButtonStyle,
+                  fontSize: '0.75rem',
+                  padding: '0.5rem 0.75rem'
+                }}
+              >
+                + Adicionar
+              </button>
+            </div>
             
-            <button
-              type="button"
-              onClick={addCriteria}
-              style={addButtonStyle}
-            >
-              + Adicionar Critério
-            </button>
+            <div style={{ marginBottom: '0.5rem' }}>
+              {formData.acceptanceCriteria.map((criteria, index) => (
+                <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <input
+                    type="text"
+                    value={criteria}
+                    onChange={(e) => updateCriteria(index, e.target.value)}
+                    style={{ 
+                      ...inputStyle, 
+                      marginBottom: 0, 
+                      marginRight: '0.5rem',
+                      flex: 1
+                    }}
+                    placeholder={`Critério ${index + 1}`}
+                  />
+                  {formData.acceptanceCriteria.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeCriteria(index)}
+                      style={{
+                        ...removeButtonStyle,
+                        fontSize: '0.75rem',
+                        padding: '0.5rem',
+                        width: '2rem',
+                        height: '2rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {errors.acceptanceCriteria && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.acceptanceCriteria}</p>}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onCancel} style={secondaryButtonStyle}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+              Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+              style={inputStyle}
+            >
+              <option value="todo">📝 A Fazer</option>
+              <option value="inprogress">⚡ Em Progresso</option>
+              <option value="done">✅ Concluído</option>
+            </select>
+          </div>
+
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: '0.75rem',
+            borderTop: '1px solid #e5e7eb',
+            paddingTop: '1.5rem',
+            marginTop: '2rem'
+          }}>
+            <button 
+              type="button" 
+              onClick={onCancel} 
+              style={{
+                ...secondaryButtonStyle,
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: '1px solid #d1d5db'
+              }}
+            >
               Cancelar
             </button>
-            <button type="submit" style={primaryButtonStyle}>
+            <button 
+              type="submit" 
+              style={{
+                ...primaryButtonStyle,
+                backgroundColor: '#2563eb',
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+              }}
+            >
               {story ? 'Salvar Alterações' : 'Criar História'}
             </button>
           </div>
