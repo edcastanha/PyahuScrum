@@ -21,6 +21,12 @@ const priorityLabels = {
 };
 
 const UserStoryCardDebug: React.FC<UserStoryCardProps> = ({ story, index, onEdit }) => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit(story);
+  };
+
   return (
     <Draggable draggableId={story.id.toString()} index={index}>
       {(provided, snapshot) => (
@@ -28,20 +34,21 @@ const UserStoryCardDebug: React.FC<UserStoryCardProps> = ({ story, index, onEdit
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`mb-4 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+          className={`mb-4 ${snapshot.isDragging ? 'shadow-lg transform rotate-2' : ''}`}
         >
-          <div className="bg-white p-4 rounded-lg shadow-md border">
+          <div className="bg-white p-4 rounded-lg shadow-md border hover:shadow-lg transition-shadow duration-200">
             <div className="flex justify-between items-start mb-2">
-              <h4 className="text-lg font-semibold text-gray-800 flex-grow">
+              <h4 className="text-lg font-semibold text-gray-800 flex-grow pr-2">
                 {story.title}
               </h4>
               <div className="flex-shrink-0 flex items-center gap-2">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${priorityColors[story.priority]}`}>
-                  {story.priority}
+                  {priorityLabels[story.priority]}
                 </span>
                 <button 
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  onClick={() => onEdit(story)}
+                  type="button"
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                  onClick={handleEdit}
                 >
                   Editar
                 </button>

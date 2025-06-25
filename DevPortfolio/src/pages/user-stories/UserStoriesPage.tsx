@@ -100,8 +100,12 @@ const UserStoriesPage: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quadro Kanban de Histórias de Usuário</h1>
         <button 
-          onClick={() => handleOpenForm()}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            handleOpenForm();
+          }}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
         >
           Adicionar História
         </button>
