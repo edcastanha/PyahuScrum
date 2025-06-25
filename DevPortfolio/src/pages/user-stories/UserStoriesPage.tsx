@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { DropResult } from 'react-beautiful-dnd';
 import KanbanBoardDebug from '../../components/user-stories/KanbanBoardDebug';
-import UserStoryForm from '../../components/user-stories/UserStoryForm';
+import UserStoryFormDebug from '../../components/user-stories/UserStoryFormDebug';
 import { UserStory } from '../../entities/UserStory';
 import { userStoryService } from '../../services/user-story/userStoryService';
 import { projectService } from '../../services/project/projectService';
@@ -112,7 +112,7 @@ const UserStoriesPage: React.FC = () => {
       </div>
       <KanbanBoardDebug stories={stories} onDragEnd={handleDragEnd} onEditStory={handleOpenForm} />
       {isFormOpen && (
-        <UserStoryForm
+        <UserStoryFormDebug
           story={editingStory}
           projects={projects}
           onSave={handleSaveStory}
