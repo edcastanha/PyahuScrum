@@ -105,6 +105,7 @@
 - [ ] T038 [P] [US3] Criar teste de contrato para POST /api/auth/logout em backend/tests/contract/auth-logout.contract.test.ts
 - [ ] T039 [P] [US3] Criar teste de integração de revogação de sessão no logout em backend/tests/integration/logout.integration.test.ts
 - [ ] T040 [P] [US3] Criar teste frontend de bloqueio em rota protegida após logout em DevPortfolio/src/router/ProtectedRoute.test.tsx
+- [ ] T059 [P] [US3] Criar teste de integração para reautenticação forçada quando token GitHub estiver inválido/expirado em backend/tests/integration/reauth-required.integration.test.ts
 
 ### Implementation for User Story 3
 
@@ -113,6 +114,7 @@
 - [ ] T043 [US3] Integrar middleware de sessão nas rotas protegidas backend em backend/src/app.ts
 - [ ] T044 [US3] Implementar ação de logout no frontend em DevPortfolio/src/services/auth/authService.ts
 - [ ] T045 [US3] Adicionar controle de estado de sessão expirada no AuthContext em DevPortfolio/src/context/AuthContext.tsx
+- [ ] T060 [US3] Implementar política de reautenticação obrigatória em caso de token GitHub inválido/expirado no backend em backend/src/services/session.service.ts
 
 **Checkpoint**: US3 funcional e testável independentemente.
 
@@ -151,6 +153,8 @@
 - [ ] T056 [P] Registrar decisão arquitetural de autenticação GitHub em docs/adr/002-github-oauth-auth.md
 - [ ] T057 Executar suíte de testes frontend e backend e corrigir regressões em DevPortfolio/src/ e backend/src/
 - [ ] T058 Validar fluxo fim-a-fim manual conforme quickstart em specs/001-github-oauth-auth/quickstart.md
+- [ ] T061 [P] Instrumentar métricas de tempo de login e taxa de sucesso para validar SC-001 e SC-002 em backend/src/lib/metrics.ts e backend/src/api/auth.routes.ts
+- [ ] T062 [P] Criar teste de performance/reliability para SC-001 e SC-002 em backend/tests/integration/auth-slo.integration.test.ts
 
 ---
 
