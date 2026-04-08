@@ -36,7 +36,7 @@ The system must store the developer's GitHub profile and OAuth token securely in
 **Acceptance Scenarios**:
 
 1. **Given** a developer logs in with GitHub, **When** the access token and profile are received, **Then** a new User document is created in MongoDB with githubId, username, avatar, token expiration, and timestamps.
-2. **Given** a developer with an existing GitHub account logs in again, **When** the system checks for an existing user by githubId, **Then** the system updates the existing user document (token refresh, last login timestamp) instead of creating a duplicate.
+2. **Given** a developer with an existing GitHub account logs in again, **When** the system checks for an existing user by githubId, **Then** the system updates the existing user document (new access token metadata and last login timestamp) instead of creating a duplicate.
 3. **Given** a user document exists in MongoDB, **When** the app starts a new session, **Then** the system retrieves the user data and populates the context/state.
 4. **Given** a user's access token is stored, **When** the token is used in subsequent API calls, **Then** the system validates token expiration and refreshes if needed.
 
@@ -93,7 +93,7 @@ The system gracefully handles errors during OAuth flow, network failures, and AP
 - **FR-003**: System MUST exchange GitHub authorization code for access token using the GitHub API.
 - **FR-004**: System MUST retrieve the developer's GitHub profile (username, avatar, public repos count, bio, followers).
 - **FR-005**: System MUST create and persist a User document in MongoDB with GitHub profile and token information.
-- **FR-006**: System MUST update existing User documents on subsequent logins (refresh token, update last login).
+- **FR-006**: System MUST update existing User documents on subsequent logins (access token metadata and last login timestamp).
 - **FR-007**: System MUST implement session management using secure tokens (JWT recommended).
 - **FR-008**: System MUST provide a logout mechanism that invalidates the session.
 - **FR-009**: System MUST redirect authenticated users directly to the dashboard (skip login).
