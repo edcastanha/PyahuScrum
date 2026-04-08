@@ -1,134 +1,109 @@
-# Feature Specification: GitHub OAuth Authentication with Login Home
+# Feature Specification: GitHub Users Login (Frontend-Only)
 
 **Feature Branch**: `001-feature-login-github`  
 **Created**: 2026-04-08  
 **Status**: Draft  
-**Input**: User description: "Integrar a autenticação via API do GitHub (https://api.github.com/users/). A home será tela de login. O site utiliza MongoDB como base de dados."
+**Input**: User description: "Integrar https://api.github.com/users/ com home como tela de login. Projeto frontend em DevPortfolio, sem backend nesta fase."
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Developer Login with GitHub (Priority: P1)
+### User Story 1 - Login Inicial por Usuário GitHub (Priority: P1)
 
-A developer visits the home page and logs in using their GitHub account via OAuth2 flow. The system exchanges the authorization code for an access token and retrieves the developer's GitHub profile information.
+O usuário abre a home, informa seu username do GitHub e entra no app após validação via `https://api.github.com/users/{username}`.
 
-**Why this priority**: P1 is the foundation of all other features. Without OAuth login, the entire application is inaccessible. This is the critical entry point.
+**Why this priority**: É o ponto de entrada obrigatório do produto nesta fase.
 
-**Independent Test**: Can be fully tested independently by visiting the home page, clicking "Login with GitHub", authorizing the app, and verifying redirect to dashboard with user profile loaded.
+**Independent Test**: Inserir username válido e confirmar redirecionamento para dashboard com dados do perfil.
 
 **Acceptance Scenarios**:
 
-1. **Given** I am on the home page (login screen), **When** I click "Login with GitHub", **Then** I am redirected to GitHub's OAuth authorization page.
-2. **Given** I am on GitHub's authorization page, **When** I click "Authorize" and grant permission, **Then** I am redirected back to the app with an authorization code.
-3. **Given** I have received an authorization code, **When** the app exchanges it for an access token, **Then** the system retrieves my GitHub user profile (username, avatar, bio, public repos count).
-4. **Given** my GitHub profile has been fetched, **When** the system saves my user data to MongoDB, **Then** I am redirected to the dashboard and see my profile loaded.
-5. **Given** I have previously logged in, **When** I return to the app, **Then** the system recognizes my session and redirects me directly to the dashboard (no re-login needed).
+1. **Given** estou na home, **When** informo um username válido e envio, **Then** o sistema consulta a API do GitHub e autentica o usuário.
+2. **Given** fui autenticado, **When** o perfil retorna com sucesso, **Then** sou redirecionado para o dashboard.
+3. **Given** já tenho sessão local ativa, **When** abro a aplicação novamente, **Then** sou redirecionado direto ao dashboard.
 
 ---
 
-### User Story 2 - User Data Persistence in MongoDB (Priority: P1)
+### User Story 2 - Persistência de Sessão no Frontend (Priority: P1)
 
-The system must store the developer's GitHub profile and OAuth token securely in MongoDB. This enables session management, profile retrieval, and future feature development (e.g., linking GitHub projects).
+Após login, o app persiste sessão local e dados mínimos do usuário para manter experiência contínua.
 
-**Why this priority**: P1 is required for session persistence and allows subsequent features (dashboard, projects) to rely on stored user data. Critical for app functionality beyond the login flow.
+**Why this priority**: Necessário para evitar novo login a cada reload.
 
-**Independent Test**: Can be tested by logging in and verifying that user documents are created/updated in MongoDB with correct fields (githubId, username, avatar, accessToken, createdAt, updatedAt).
+**Independent Test**: Realizar login, recarregar página e validar sessão mantida.
 
 **Acceptance Scenarios**:
 
-1. **Given** a developer logs in with GitHub, **When** the access token and profile are received, **Then** a new User document is created in MongoDB with githubId, username, avatar, token expiration, and timestamps.
-2. **Given** a developer with an existing GitHub account logs in again, **When** the system checks for an existing user by githubId, **Then** the system updates the existing user document (new access token metadata and last login timestamp) instead of creating a duplicate.
-3. **Given** a user document exists in MongoDB, **When** the app starts a new session, **Then** the system retrieves the user data and populates the context/state.
-4. **Given** a user's access token is stored, **When** the token is used in subsequent API calls, **Then** the system validates token expiration and refreshes if needed.
+1. **Given** login realizado, **When** a aplicação salva sessão local, **Then** dados mínimos do perfil ficam disponíveis após refresh.
+2. **Given** sessão local existe, **When** o app inicia, **Then** o estado autenticado é restaurado.
 
 ---
 
-### User Story 3 - Session Management and Logout (Priority: P2)
+### User Story 3 - Logout e Rotas Protegidas (Priority: P2)
 
-The system manages user sessions using secure tokens (JWT or similar). Users can log out, which invalidates the session and clears local/session storage.
+Usuário pode sair da sessão e o app impede acesso a páginas privadas sem autenticação.
 
-**Why this priority**: P2 is important for security and usability. Without session management, users could remain "logged in" indefinitely or on shared devices. Essential for a professional app.
+**Why this priority**: Garante controle de acesso no frontend.
 
-**Independent Test**: Can be tested by logging in, verifying session is active, clicking logout on the sidebar/profile menu, and confirming redirect to login page with session cleared.
+**Independent Test**: Fazer logout e tentar acessar rota protegida por URL direta.
 
 **Acceptance Scenarios**:
 
-1. **Given** a user is logged in (session token exists), **When** they navigate the app, **Then** the session token is validated on each critical action.
-2. **Given** a user clicks the "Logout" button, **When** the logout action is triggered, **Then** the session token is destroyed and the user is redirected to the login page.
-3. **Given** a user logs out, **When** they try to access a protected page directly (via URL), **Then** they are redirected to the login page.
-4. **Given** a session token expires, **When** a user attempts an action that requires authentication, **Then** they are redirected to the login page with a message (e.g., "Session expired, please log in again").
+1. **Given** sessão ativa, **When** clico em logout, **Then** sessão local é removida e volto para login.
+2. **Given** não estou autenticado, **When** tento abrir rota protegida, **Then** sou redirecionado para home/login.
 
 ---
 
-### User Story 4 - Error Handling and Retry (Priority: P3)
+### User Story 4 - Tratamento de Erros da API GitHub (Priority: P3)
 
-The system gracefully handles errors during OAuth flow, network failures, and API issues. Users receive clear feedback and can retry authentication.
+A interface exibe mensagens claras para usuário inexistente, limite de requisição e falha de rede.
 
-**Why this priority**: P3 is a quality-of-life feature. While critical systems rely on it, it's not required for core functionality. Improves user experience and app robustness.
+**Why this priority**: Melhora usabilidade e reduz abandono no login.
 
-**Independent Test**: Can be tested by simulating network failures, invalid credentials, revoked tokens, and verifying that appropriate error messages are displayed and retry options are available.
+**Independent Test**: Testar username inválido e simular falha de rede.
 
 **Acceptance Scenarios**:
 
-1. **Given** the GitHub OAuth flow is interrupted (e.g., user cancels authorization), **When** the user returns to the login page, **Then** they see a message explaining what happened and can retry login.
-2. **Given** the access token exchange fails (server error), **When** the system encounters the error, **Then** an error message is displayed and the user can retry.
-3. **Given** a GitHub API call fails (network timeout, GitHub API down), **When** the system attempts to fetch user profile, **Then** a retry mechanism is triggered with exponential backoff and user receives feedback.
-4. **Given** an access token is revoked or invalid, **When** the user attempts an authenticated action, **Then** they are prompted to re-authenticate via GitHub.
+1. **Given** username inexistente, **When** envio login, **Then** recebo mensagem "usuário não encontrado".
+2. **Given** erro de rede/rate limit, **When** a consulta falha, **Then** recebo mensagem amigável e opção de tentar novamente.
 
 ---
 
 ### Edge Cases
 
-- What happens if the developer cancels GitHub authorization mid-flow?
-- How does the system handle rate limits from GitHub API?
-- What if MongoDB is temporarily unavailable during login?
-- How does the system handle duplicate GitHub accounts (same GitHub ID from different sessions)?
-- What if the access token is revoked externally (user revokes app permission on GitHub)?
+- Username vazio ou com espaços inválidos.
+- Username com caracteres especiais fora do padrão GitHub.
+- API GitHub indisponível temporariamente.
+- Rate limit excedido.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST display a login page as the home page for unauthenticated users.
-- **FR-002**: System MUST implement OAuth2 flow with GitHub (authorization code grant).
-- **FR-003**: System MUST exchange GitHub authorization code for access token using the GitHub API.
-- **FR-004**: System MUST retrieve the developer's GitHub profile (username, avatar, public repos count, bio, followers).
-- **FR-005**: System MUST create and persist a User document in MongoDB with GitHub profile and token information.
-- **FR-006**: System MUST update existing User documents on subsequent logins (access token metadata and last login timestamp).
-- **FR-007**: System MUST implement session management using secure tokens (JWT recommended).
-- **FR-008**: System MUST provide a logout mechanism that invalidates the session.
-- **FR-009**: System MUST redirect authenticated users directly to the dashboard (skip login).
-- **FR-010**: System MUST handle authentication errors gracefully and display user-friendly messages.
-- **FR-011**: System MUST validate session token expiration and force GitHub OAuth re-authentication when the GitHub access token is expired, revoked, or invalid.
-- **FR-012**: System MUST store GitHub access tokens securely (encrypted at rest in MongoDB recommended).
-- **FR-013**: System MUST respect GitHub API rate limits and implement appropriate retry logic.
+- **FR-001**: Sistema MUST exibir a home como tela de login.
+- **FR-002**: Sistema MUST autenticar usuário consultando `https://api.github.com/users/{username}`.
+- **FR-003**: Sistema MUST considerar login válido apenas para resposta de perfil existente.
+- **FR-004**: Sistema MUST armazenar sessão local e perfil mínimo no frontend.
+- **FR-005**: Sistema MUST restaurar sessão local ao iniciar a aplicação.
+- **FR-006**: Sistema MUST oferecer logout removendo sessão local.
+- **FR-007**: Sistema MUST proteger rotas internas para usuários não autenticados.
+- **FR-008**: Sistema MUST exibir feedback de erro para 404, rate limit e falhas de rede.
 
 ### Key Entities
 
-- **User**: Represents a logged-in developer. Attributes: `githubId` (primary, unique), `username`, `avatar`, `email`, `bio`, `followers`, `publicRepos`, `accessToken` (encrypted), `tokenExpiresAt`, `createdAt`, `updatedAt`, `isActive`.
-- **Session**: Represents an active user session. Attributes: `userId` (reference to User), `token` (JWT), `expiresAt`, `createdAt`, `lastActivity`.
-- **GitHubOAuthConfig**: Configuration for OAuth credentials. Attributes: `clientId`, `clientSecret`, `redirectUrl`, `scope` (required permissions).
+- **GitHubProfile**: `login`, `id`, `avatar_url`, `name`, `bio`, `public_repos`, `followers`.
+- **AuthSession**: `isAuthenticated`, `githubLogin`, `savedAt`.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Developers can complete GitHub login in under 3 seconds (from home page click to dashboard load, excluding network latency).
-- **SC-002**: System successfully authenticates 95% of login attempts on first try (error rate < 5%).
-- **SC-003**: User data is persisted in MongoDB on every login with 100% accuracy (no data loss or corruption).
-- **SC-004**: Session tokens remain valid for at least 24 hours without requiring re-login.
-- **SC-005**: Logout operation completes in under 500ms and session is immediately invalidated.
-- **SC-006**: System reliably detects expired/revoked tokens and prompts re-authentication within 1 second.
-- **SC-007**: Error messages are clear and actionable; 90% of users can retry after an error without support.
+- **SC-001**: Usuário completa login em até 3 segundos em rede estável.
+- **SC-002**: 95% dos logins com username válido concluem no primeiro envio.
+- **SC-003**: Sessão local é restaurada corretamente após refresh em 100% dos casos válidos.
+- **SC-004**: Logout remove sessão local em menos de 500ms.
 
 ## Assumptions
 
-- **OAuth Provider**, GitHub OAuth API is stable and available (99.9% uptime assumed).
-- **User Environment**: Developers have stable internet connectivity and use modern browsers with cookies/session storage enabled.
-- **Scope Boundaries**: Mobile app authentication is out of scope for v1; web-only initially.
-- **Existing Infrastructure**: MongoDB is already set up and accessible from the backend.
-- **Security**: HTTPS is enforced in production; client secret is stored securely on the backend (never exposed to frontend).
-- **GitHub Permissions**: We assume the required scopes (e.g., `user:email`, `read:user`) are sufficient for profile retrieval; no private repo access is required.
-- **Data Retention**: User data persists indefinitely unless explicitly deleted; no automatic purge of inactive users is required for v1.
-- **Token Storage**: Access tokens are encrypted before storage in MongoDB.
-- **Rate Limiting**: GitHub API rate limits for authenticated requests (5,000 requests/hour) are sufficient for expected user load.
-- **Backward Compatibility**: No existing authentication system; this is the first authentication mechanism in the app.
+- Fase atual é frontend-only em `DevPortfolio`.
+- Não haverá backend nem persistência MongoDB nesta entrega.
+- Integração futura com backend/Mongo poderá substituir sessão local sem quebrar UX.
