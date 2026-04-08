@@ -1,0 +1,40 @@
+{
+  "feature_directory": "specs/001-github-oauth-auth",
+  "feature_name": "GitHub OAuth Authentication with Login Home",
+  "created": "2026-04-08",
+  "status": "specification_complete",
+  "branch": "001-github-oauth-auth",
+  "user_stories": [
+    {
+      "id": "US1",
+      "title": "Developer Login with GitHub",
+      "priority": "P1"
+    },
+    {
+      "id": "US2",
+      "title": "User Data Persistence in MongoDB",
+      "priority": "P1"
+    },
+    {
+      "id": "US3",
+      "title": "Session Management and Logout",
+      "priority": "P2"
+    },
+    {
+      "id": "US4",
+      "title": "Error Handling and Retry",
+      "priority": "P3"
+    }
+  ],
+  "entities": [
+    "User",
+    "Session",
+    "GitHubOAuthConfig"
+  ],
+  "dependencies": [
+    "MongoDB (already set up)",
+    "GitHub OAuth API",
+    "HTTPS in production"
+  ],
+  "next_step": "/speckit.plan"
+}
