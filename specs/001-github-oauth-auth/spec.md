@@ -1,6 +1,6 @@
 # Feature Specification: GitHub OAuth Authentication with Login Home
 
-**Feature Branch**: `001-github-oauth-auth`  
+**Feature Branch**: `001-feature-login-github`  
 **Created**: 2026-04-08  
 **Status**: Draft  
 **Input**: User description: "Integrar a autenticação via API do GitHub (https://api.github.com/users/). A home será tela de login. O site utiliza MongoDB como base de dados."
@@ -98,13 +98,13 @@ The system gracefully handles errors during OAuth flow, network failures, and AP
 - **FR-008**: System MUST provide a logout mechanism that invalidates the session.
 - **FR-009**: System MUST redirect authenticated users directly to the dashboard (skip login).
 - **FR-010**: System MUST handle authentication errors gracefully and display user-friendly messages.
-- **FR-011**: System MUST validate access tokens and refresh expired tokens automatically.
+- **FR-011**: System MUST validate session token expiration and force GitHub OAuth re-authentication when the GitHub access token is expired, revoked, or invalid.
 - **FR-012**: System MUST store GitHub access tokens securely (encrypted at rest in MongoDB recommended).
 - **FR-013**: System MUST respect GitHub API rate limits and implement appropriate retry logic.
 
 ### Key Entities
 
-- **User**: Represents a logged-in developer. Attributes: `githubId` (primary, unique), `username`, `avatar`, `email`, `bio`, `followers`, `publicRepos`, `accessToken` (encrypted), `refreshToken` (if applicable), `tokenExpiresAt`, `createdAt`, `updatedAt`, `isActive`.
+- **User**: Represents a logged-in developer. Attributes: `githubId` (primary, unique), `username`, `avatar`, `email`, `bio`, `followers`, `publicRepos`, `accessToken` (encrypted), `tokenExpiresAt`, `createdAt`, `updatedAt`, `isActive`.
 - **Session**: Represents an active user session. Attributes: `userId` (reference to User), `token` (JWT), `expiresAt`, `createdAt`, `lastActivity`.
 - **GitHubOAuthConfig**: Configuration for OAuth credentials. Attributes: `clientId`, `clientSecret`, `redirectUrl`, `scope` (required permissions).
 
@@ -129,6 +129,6 @@ The system gracefully handles errors during OAuth flow, network failures, and AP
 - **Security**: HTTPS is enforced in production; client secret is stored securely on the backend (never exposed to frontend).
 - **GitHub Permissions**: We assume the required scopes (e.g., `user:email`, `read:user`) are sufficient for profile retrieval; no private repo access is required.
 - **Data Retention**: User data persists indefinitely unless explicitly deleted; no automatic purge of inactive users is required for v1.
-- **Token Storage**: Access tokens are encrypted before storage in MongoDB; refresh tokens (if used) are also encrypted.
+- **Token Storage**: Access tokens are encrypted before storage in MongoDB.
 - **Rate Limiting**: GitHub API rate limits for authenticated requests (5,000 requests/hour) are sufficient for expected user load.
 - **Backward Compatibility**: No existing authentication system; this is the first authentication mechanism in the app.
