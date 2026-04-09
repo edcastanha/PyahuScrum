@@ -18,8 +18,6 @@
     "@types/react": "^18.2.0",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.2.0",
-    "@types/react-syntax-highlighter": "^15.5.13",
-    "@uiw/react-md-editor": "^4.0.7",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.19.1",
     "lucide-react": "^0.522.0",
@@ -35,8 +33,7 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4",
-    "zod": "^3.25.67"
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
