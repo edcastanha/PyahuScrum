@@ -39,3 +39,20 @@ docker compose -f ../infra/docker-compose.yml run --rm frontend npm test -- --wa
 - Redirecionamento sem sessão validado.
 - Testes automatizados relevantes passando.
 - Documentação da feature mantida em sincronia.
+
+## 5) Evidências de validação manual (2026-04-08)
+
+- Cenário: login com usuário válido e renderização do resumo no sidebar.
+   - Evidência: componente consome `buildSidebarProfileSummary(profile, githubLogin)` e renderiza `displayName`, `displayLocation` e avatar em `Sidebar`.
+- Cenário: fallback de nome (`name` -> `login` -> "Usuário").
+   - Evidência: regra implementada em `profileSummary.ts` com derivação do primeiro nome e fallback em cadeia.
+- Cenário: fallback de localização para "Localização não informada".
+   - Evidência: regra implementada em `profileSummary.ts` e renderizada no subtítulo do sidebar.
+- Cenário: fallback de avatar para iniciais em ausência/falha da imagem.
+   - Evidência: `avatarSource` com `onError` em `Sidebar` e fallback para `avatarFallback`.
+- Cenário: refresh por mudança de pathname/reload sem refresh por re-render interno.
+   - Evidência: efeito em `Sidebar` dependente de `location.pathname`; regra formal e contrato refletidos em spec/contract.
+- Cenário: redirecionamento para login sem sessão/autenticação.
+   - Evidência: `ProtectedRoute` exige `isAuthenticated` e `githubLogin`; caso contrário, redireciona para `/`.
+- Validação automatizada de suporte:
+   - Evidência: suíte executada via Docker Compose com 6/6 suites e 9/9 testes passando.

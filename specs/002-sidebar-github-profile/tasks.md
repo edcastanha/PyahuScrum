@@ -13,10 +13,10 @@
 
 **Purpose**: Preparar baseline da feature e utilitários de domínio para o resumo de perfil.
 
-- [ ] T001 Revisar e alinhar comentários de escopo da feature em `specs/002-sidebar-github-profile/spec.md`
-- [ ] T002 Criar utilitário de derivação do resumo de perfil em `DevPortfolio/src/services/auth/profileSummary.ts`
-- [ ] T003 [P] Definir tipagens do resumo de perfil em `DevPortfolio/src/services/auth/profileSummary.types.ts`
-- [ ] T004 [P] Documentar regras de mapeamento (name/location/avatar fallback) em `specs/002-sidebar-github-profile/contracts/sidebar-profile-summary.md`
+- [x] T001 Revisar e alinhar comentários de escopo da feature em `specs/002-sidebar-github-profile/spec.md`
+- [x] T002 Criar utilitário de derivação do resumo de perfil em `DevPortfolio/src/services/auth/profileSummary.ts`
+- [x] T003 [P] Definir tipagens do resumo de perfil em `DevPortfolio/src/services/auth/profileSummary.types.ts`
+- [x] T004 [P] Documentar regras de mapeamento (name/location/avatar fallback) em `specs/002-sidebar-github-profile/contracts/sidebar-profile-summary.md`
 
 ---
 
@@ -26,11 +26,11 @@
 
 **⚠️ CRITICAL**: Nenhuma user story começa antes desta fase.
 
-- [ ] T005 Ajustar contrato de perfil autenticado para suportar refresh por acesso em `DevPortfolio/src/services/auth/authStorage.ts`
-- [ ] T006 Implementar serviço de refresh do perfil autenticado em `DevPortfolio/src/services/auth/githubAuthService.ts`
-- [ ] T007 Atualizar fluxo de hidratação e refresh por acesso em `DevPortfolio/src/context/AuthContext.tsx`
-- [ ] T008 Garantir redirecionamento para login sem sessão/autenticação em `DevPortfolio/src/router/ProtectedRoute.tsx`
-- [ ] T009 [P] Atualizar documentação de fluxo de acesso e refresh em `specs/002-sidebar-github-profile/quickstart.md`
+- [x] T005 Ajustar contrato de perfil autenticado para suportar refresh por mudança de pathname/reload em `DevPortfolio/src/services/auth/authStorage.ts`
+- [x] T006 Implementar serviço de refresh do perfil autenticado em `DevPortfolio/src/services/auth/githubAuthService.ts`
+- [x] T007 Atualizar fluxo de hidratação e refresh por pathname/reload em `DevPortfolio/src/context/AuthContext.tsx`
+- [x] T008 Garantir redirecionamento para login sem sessão/autenticação em `DevPortfolio/src/router/ProtectedRoute.tsx`
+- [x] T009 [P] Atualizar documentação de fluxo de acesso e refresh (sem disparo em re-render interno) em `specs/002-sidebar-github-profile/quickstart.md`
 
 **Checkpoint**: Base pronta para implementar US1, US2 e US3.
 
@@ -44,10 +44,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Integrar leitura de resumo de perfil no componente em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [ ] T011 [US1] Aplicar regra de nome (primeiro nome -> login -> "Usuário") em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [ ] T012 [US1] Aplicar regra de avatar (imagem ou iniciais) em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [ ] T013 [US1] Ajustar estilos do avatar para modo imagem/iniciais em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
+- [x] T010 [P] [US1] Integrar leitura de resumo de perfil no componente em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [x] T011 [US1] Aplicar regra de nome (primeiro nome -> login -> "Usuário") em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [x] T012 [US1] Aplicar regra de avatar (imagem ou iniciais) em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [x] T013 [US1] Ajustar estilos do avatar para modo imagem/iniciais em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
 
 **Checkpoint**: US1 funcional e validável isoladamente.
 
@@ -61,10 +61,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [P] [US2] Propagar `location` no modelo de perfil em `DevPortfolio/src/services/auth/authStorage.ts`
-- [ ] T015 [P] [US2] Propagar `location` na resposta de serviço em `DevPortfolio/src/services/auth/githubAuthService.ts`
-- [ ] T016 [US2] Exibir `location` com fallback fixo no sidebar em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [ ] T017 [US2] Ajustar texto de subtítulo para variação de localização em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
+- [x] T014 [P] [US2] Propagar `location` no modelo de perfil em `DevPortfolio/src/services/auth/authStorage.ts`
+- [x] T015 [P] [US2] Propagar `location` na resposta de serviço em `DevPortfolio/src/services/auth/githubAuthService.ts`
+- [x] T016 [US2] Exibir `location` com fallback fixo no sidebar em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [x] T017 [US2] Ajustar texto de subtítulo para variação de localização em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
 
 **Checkpoint**: US2 funcional e validável sem dependência de US3.
 
@@ -74,14 +74,14 @@
 
 **Goal**: Manter robustez visual em dados parciais e garantir acesso seguro por sessão/autenticação.
 
-**Independent Test**: Em dados incompletos, sidebar mantém layout íntegro; sem sessão válida, app redireciona para login antes de exibir rotas internas.
+**Independent Test**: Em dados incompletos, sidebar mantém layout íntegro; sem sessão válida, app redireciona para login antes de exibir rotas internas; re-render interno sem troca de rota não dispara refresh.
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Aplicar normalização defensiva para nome e iniciais em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [ ] T019 [US3] Ajustar fallback visual para avatar indisponível sem quebrar layout em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
-- [ ] T020 [US3] Reforçar redirecionamento em sessão inválida no acesso interno em `DevPortfolio/src/router/ProtectedRoute.tsx`
-- [ ] T021 [US3] Garantir refresh do perfil em cada novo acesso autenticado em `DevPortfolio/src/context/AuthContext.tsx`
+- [x] T018 [US3] Aplicar normalização defensiva para nome e iniciais em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [x] T019 [US3] Ajustar fallback visual para avatar indisponível sem quebrar layout em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
+- [x] T020 [US3] Reforçar redirecionamento em sessão inválida no acesso interno em `DevPortfolio/src/router/ProtectedRoute.tsx`
+- [x] T021 [US3] Garantir refresh do perfil em mudança de pathname protegido e reload, sem refresh em re-render interno, em `DevPortfolio/src/context/AuthContext.tsx`
 
 **Checkpoint**: US3 funcional e validável isoladamente.
 
@@ -91,10 +91,10 @@
 
 **Purpose**: Validação final, documentação e consistência geral da feature.
 
-- [ ] T022 [P] Atualizar decisões e rastreabilidade da feature em `specs/002-sidebar-github-profile/research.md`
-- [ ] T023 [P] Atualizar modelo de dados final em `specs/002-sidebar-github-profile/data-model.md`
-- [ ] T024 Executar validação automatizada do frontend via Docker Compose conforme `specs/002-sidebar-github-profile/quickstart.md`
-- [ ] T025 Executar validação manual dos cenários de aceitação e registrar evidências em `specs/002-sidebar-github-profile/quickstart.md`
+- [x] T022 [P] Atualizar decisões e rastreabilidade da feature em `specs/002-sidebar-github-profile/research.md`
+- [x] T023 [P] Atualizar modelo de dados final em `specs/002-sidebar-github-profile/data-model.md`
+- [x] T024 Executar validação automatizada do frontend via Docker Compose conforme `specs/002-sidebar-github-profile/quickstart.md`
+- [x] T025 Executar validação manual dos cenários de aceitação e registrar evidências em `specs/002-sidebar-github-profile/quickstart.md`
 
 ---
 

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import ProtectedRoute from './ProtectedRoute';
 
 var mockNavigate = jest.fn();
-var mockAuthState = { isAuthenticated: false, isHydrated: true };
+var mockAuthState = { isAuthenticated: false, isHydrated: true, githubLogin: null };
 
 jest.mock('react-router-dom', () => ({
   __esModule: true,
@@ -18,7 +18,7 @@ jest.mock('../context/AuthContext', () => ({
 
 describe('ProtectedRoute', () => {
   it('redirects unauthenticated users', () => {
-    mockAuthState = { isAuthenticated: false, isHydrated: true };
+    mockAuthState = { isAuthenticated: false, isHydrated: true, githubLogin: null };
     render(
       <ProtectedRoute>
         <div>protected</div>
@@ -29,7 +29,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders children when authenticated', () => {
-    mockAuthState = { isAuthenticated: true, isHydrated: true };
+    mockAuthState = { isAuthenticated: true, isHydrated: true, githubLogin: 'edson' };
     render(
       <ProtectedRoute>
         <div>protected</div>

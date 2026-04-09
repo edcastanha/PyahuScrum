@@ -14,6 +14,7 @@ describe('fetchGithubUserProfile', () => {
         id: 123,
         avatar_url: 'https://avatar.test',
         name: 'Edson',
+        location: 'Recife',
         bio: 'Developer',
         public_repos: 10,
         followers: 5

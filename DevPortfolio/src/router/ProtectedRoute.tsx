@@ -7,13 +7,13 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isHydrated } = useAuth();
+  const { isAuthenticated, isHydrated, githubLogin } = useAuth();
 
   if (!isHydrated) {
     return null;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !githubLogin) {
     return <Navigate to="/" replace />;
   }
 

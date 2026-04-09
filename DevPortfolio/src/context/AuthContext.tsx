@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { authStorage, AuthSession, GitHubProfile } from '../services/auth/authStorage';
 import { fetchGithubUserProfile } from '../services/auth/githubAuthService';
 import { mapAuthError } from '../services/auth/authError';
@@ -11,6 +11,7 @@ interface AuthContextValue {
   errorMessage: string | null;
   isLoggingIn: boolean;
   loginWithGithub: (username: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -51,12 +52,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsHydrated(true);
   }, []);
 
-  const persistSession = (session: AuthSession) => {
+  const persistSession = useCallback((session: AuthSession) => {
     authStorage.saveSession(session);
     setIsAuthenticated(session.isAuthenticated);
     setGithubLogin(session.githubLogin);
     setProfile(session.profile ?? null);
-  };
+  }, []);
 
   const loginWithGithub = async (username: string) => {
     setIsLoggingIn(true);
@@ -79,6 +80,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshProfile = useCallback(async () => {
+    if (!isAuthenticated || !githubLogin) {
+      return;
+    }
+
+    try {
+      const githubProfile = await fetchGithubUserProfile(githubLogin);
+
+      persistSession({
+        isAuthenticated: true,
+        githubLogin: githubProfile.login,
+        savedAt: new Date().toISOString(),
+        profile: githubProfile
+      });
+    } catch (error) {
+      const authError = mapAuthError(error);
+      setErrorMessage(authError.message);
+    }
+  }, [githubLogin, isAuthenticated, persistSession]);
+
   const logout = () => {
     authStorage.clearSession();
     setIsAuthenticated(false);
@@ -99,6 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         errorMessage,
         isLoggingIn,
         loginWithGithub,
+        refreshProfile,
         logout,
         clearError
       }}
