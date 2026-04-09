@@ -36,6 +36,7 @@ O bloco de perfil do sidebar deve sempre produzir:
 
 - Executar refresh dos dados de perfil ao entrar em rota protegida por mudança de pathname ou em reload da página.
 - Não executar refresh em re-renderizações internas sem mudança de rota.
+- Em falha no refresh (rede/API), encerrar sessão autenticada e redirecionar para login.
 
 ## Test Contract
 
@@ -46,3 +47,4 @@ Casos obrigatórios:
 4. Sem `avatar_url` renderiza iniciais.
 5. Sem sessão/autenticação redireciona para login.
 6. Re-renderização interna sem mudança de pathname não dispara refresh.
+7. Falha no refresh em rota protegida encerra sessão e redireciona para login.

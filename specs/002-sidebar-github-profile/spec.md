@@ -14,6 +14,8 @@
 - Q: Qual fallback visual deve ser usado para avatar ausente? → A: Option A - usar até 2 iniciais do nome exibido (nome -> login -> "Usuário").
 - Q: Como atualizar os dados de perfil após hidratação da sessão? → A: Refresh a cada novo acesso; sem sessão ou sem autenticação, redirecionar para login.
 - Q: O que define "novo acesso" para refresh do perfil? → A: Entrada em rota protegida por mudança de pathname ou reload da página; re-renderização interna isolada não dispara refresh.
+- Q: Como validar de forma objetiva a compreensão visual da conta no sidebar (SC-004)? → A: Option C - manter SC-004 com protocolo mínimo de teste rápido de usabilidade.
+- Q: Qual comportamento em falha de refresh do perfil autenticado? → A: Option A - desautenticar imediatamente e redirecionar para login.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -71,6 +73,7 @@ Como usuário autenticado, quero que o perfil do sidebar continue legível mesmo
 - Sessão parcialmente restaurada (ex.: sem location) deve continuar exibindo resumo consistente.
 - Sem sessão válida ou sem autenticação, o acesso deve ser redirecionado para a tela de login.
 - Re-renderizações internas sem mudança de pathname não devem acionar refresh adicional de perfil.
+- Em falha no refresh do perfil autenticado, o sistema deve encerrar a sessão e redirecionar para login.
 
 ## Requirements *(mandatory)*
 
@@ -87,6 +90,7 @@ Como usuário autenticado, quero que o perfil do sidebar continue legível mesmo
 - **FR-009**: O sistema MUST renderizar o resumo de perfil do sidebar com os dados persistidos na sessão local durante a hidratação da aplicação.
 - **FR-010**: O sistema MUST atualizar os dados de perfil do sidebar quando houver entrada em rota protegida por mudança de pathname ou reload da página; re-renderizações internas sem mudança de rota MUST NOT disparar refresh.
 - **FR-011**: O sistema MUST redirecionar para login quando não houver sessão válida ou quando o usuário não estiver autenticado.
+- **FR-012**: O sistema MUST encerrar a sessão autenticada e redirecionar para login quando o refresh de perfil falhar por erro de API ou rede durante acesso a rota protegida.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -100,7 +104,7 @@ Como usuário autenticado, quero que o perfil do sidebar continue legível mesmo
 - **SC-001**: Em pelo menos 95% das sessões autenticadas com dados completos, o sidebar exibe nome e avatar corretos na primeira renderização.
 - **SC-002**: Em 100% dos testes de ausência de localização, o subtítulo apresenta fallback amigável sem campo vazio.
 - **SC-003**: Em 100% dos testes de ausência de avatar, o sistema apresenta avatar substituto sem quebra visual do componente.
-- **SC-004**: A identificação da conta no sidebar é compreendida por pelo menos 90% dos usuários em teste rápido de validação visual.
+- **SC-004**: A identificação da conta no sidebar é compreendida por pelo menos 90% dos participantes em teste rápido de validação visual, com amostra mínima de 10 pessoas e pergunta objetiva de checagem da conta exibida.
 - **SC-005**: Em 100% dos acessos sem sessão válida, o usuário é redirecionado para a tela de login antes da exibição das rotas internas.
 
 ## Assumptions

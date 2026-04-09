@@ -3,98 +3,113 @@
 **Input**: Design documents from `/specs/002-sidebar-github-profile/`
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/sidebar-profile-summary.md`, `quickstart.md`
 
-**Tests**: Não há criação de novos testes como requisito explícito da spec. A validação automatizada existente será executada na fase de polish.
+**Tests**: Incluir tarefas de teste automatizado para preservar testabilidade da feature e cobrir cenários críticos de fallback, refresh e redirecionamento.
 
 **Organization**: Tasks agrupadas por user story para permitir implementação e validação independente.
 
-## Format: `[ID] [P?] [Story] Description`
-
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Preparar baseline da feature e utilitários de domínio para o resumo de perfil.
+**Purpose**: Preparar base técnica e de testes da feature.
 
-- [x] T001 Revisar e alinhar comentários de escopo da feature em `specs/002-sidebar-github-profile/spec.md`
-- [x] T002 Criar utilitário de derivação do resumo de perfil em `DevPortfolio/src/services/auth/profileSummary.ts`
-- [x] T003 [P] Definir tipagens do resumo de perfil em `DevPortfolio/src/services/auth/profileSummary.types.ts`
-- [x] T004 [P] Documentar regras de mapeamento (name/location/avatar fallback) em `specs/002-sidebar-github-profile/contracts/sidebar-profile-summary.md`
+- [ ] T001 Validar baseline do módulo de autenticação e sidebar em `DevPortfolio/src/context/AuthContext.tsx`
+- [ ] T002 [P] Preparar utilitário de projeção de perfil em `DevPortfolio/src/services/auth/profileSummary.ts`
+- [ ] T003 [P] Definir contrato tipado da projeção em `DevPortfolio/src/services/auth/profileSummary.types.ts`
+- [ ] T004 Alinhar contrato de saída e cenários obrigatórios em `specs/002-sidebar-github-profile/contracts/sidebar-profile-summary.md`
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Consolidar infraestrutura de sessão/autenticação que bloqueia todas as user stories.
+**Purpose**: Consolidar infraestrutura compartilhada de sessão, refresh e acesso protegido.
 
-**⚠️ CRITICAL**: Nenhuma user story começa antes desta fase.
+**⚠️ CRITICAL**: Nenhuma user story deve iniciar antes da conclusão desta fase.
 
-- [x] T005 Ajustar contrato de perfil autenticado para suportar refresh por mudança de pathname/reload em `DevPortfolio/src/services/auth/authStorage.ts`
-- [x] T006 Implementar serviço de refresh do perfil autenticado em `DevPortfolio/src/services/auth/githubAuthService.ts`
-- [x] T007 Atualizar fluxo de hidratação e refresh por pathname/reload em `DevPortfolio/src/context/AuthContext.tsx`
-- [x] T008 Garantir redirecionamento para login sem sessão/autenticação em `DevPortfolio/src/router/ProtectedRoute.tsx`
-- [x] T009 [P] Atualizar documentação de fluxo de acesso e refresh (sem disparo em re-render interno) em `specs/002-sidebar-github-profile/quickstart.md`
+- [ ] T005 Atualizar tipo de sessão e perfil com campos necessários em `DevPortfolio/src/services/auth/authStorage.ts`
+- [ ] T006 Atualizar cliente GitHub para campos de perfil necessários em `DevPortfolio/src/services/auth/githubAuthService.ts`
+- [ ] T007 Implementar fluxo de hidratação e refresh controlado por pathname/reload em `DevPortfolio/src/context/AuthContext.tsx`
+- [ ] T008 Implementar regra de falha de refresh com logout e redirecionamento em `DevPortfolio/src/context/AuthContext.tsx`
+- [ ] T009 Reforçar guarda de rota para sessão inválida em `DevPortfolio/src/router/ProtectedRoute.tsx`
+- [ ] T010 [P] Atualizar testes base de autenticação e rota protegida em `DevPortfolio/src/context/AuthContext.test.tsx`
+- [ ] T011 [P] Atualizar testes base de autenticação e rota protegida em `DevPortfolio/src/router/ProtectedRoute.test.tsx`
 
-**Checkpoint**: Base pronta para implementar US1, US2 e US3.
+**Checkpoint**: Fundação pronta para implementação independente das user stories.
 
 ---
 
 ## Phase 3: User Story 1 - Exibir Nome e Avatar Reais no Sidebar (Priority: P1) 🎯 MVP
 
-**Goal**: Exibir nome e avatar do usuário autenticado com fallback correto de identidade.
+**Goal**: Exibir nome e avatar reais com fallback de identidade confiável.
 
-**Independent Test**: Com sessão autenticada, o sidebar exibe primeiro nome + avatar; sem `name`, exibe `login`; sem ambos, exibe "Usuário".
+**Independent Test**: Com sessão autenticada, o sidebar exibe primeiro nome e avatar; sem `name`, usa `login`; sem ambos, usa "Usuário".
+
+### Tests for User Story 1
+
+- [ ] T012 [P] [US1] Criar testes unitários da regra de nome e iniciais em `DevPortfolio/src/services/auth/profileSummary.test.ts`
+- [ ] T013 [P] [US1] Criar teste de renderização do bloco de perfil no sidebar em `DevPortfolio/src/components/sidebar/Sidebar.test.tsx`
 
 ### Implementation for User Story 1
 
-- [x] T010 [P] [US1] Integrar leitura de resumo de perfil no componente em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [x] T011 [US1] Aplicar regra de nome (primeiro nome -> login -> "Usuário") em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [x] T012 [US1] Aplicar regra de avatar (imagem ou iniciais) em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [x] T013 [US1] Ajustar estilos do avatar para modo imagem/iniciais em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
+- [ ] T014 [US1] Implementar derivação de `displayName` e `avatarFallback` em `DevPortfolio/src/services/auth/profileSummary.ts`
+- [ ] T015 [US1] Integrar projeção de perfil autenticado no componente em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [ ] T016 [US1] Implementar renderização de avatar em modo imagem/iniciais em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [ ] T017 [US1] Ajustar estilos de avatar e identidade visual em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
 
-**Checkpoint**: US1 funcional e validável isoladamente.
+**Checkpoint**: US1 funcional e testável de forma independente.
 
 ---
 
 ## Phase 4: User Story 2 - Exibir Localização do Perfil (Priority: P2)
 
-**Goal**: Exibir localização real do perfil e fallback "Localização não informada".
+**Goal**: Exibir localização do perfil com fallback amigável.
 
-**Independent Test**: Com `location`, sidebar exibe valor do perfil; sem `location`, mostra fallback definido.
+**Independent Test**: Com `location`, exibe valor real; sem `location`, exibe "Localização não informada".
+
+### Tests for User Story 2
+
+- [ ] T018 [P] [US2] Adicionar casos de fallback de localização em `DevPortfolio/src/services/auth/profileSummary.test.ts`
+- [ ] T019 [P] [US2] Adicionar teste de subtítulo do sidebar com e sem localização em `DevPortfolio/src/components/sidebar/Sidebar.test.tsx`
 
 ### Implementation for User Story 2
 
-- [x] T014 [P] [US2] Propagar `location` no modelo de perfil em `DevPortfolio/src/services/auth/authStorage.ts`
-- [x] T015 [P] [US2] Propagar `location` na resposta de serviço em `DevPortfolio/src/services/auth/githubAuthService.ts`
-- [x] T016 [US2] Exibir `location` com fallback fixo no sidebar em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [x] T017 [US2] Ajustar texto de subtítulo para variação de localização em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
+- [ ] T020 [US2] Implementar derivação de `displayLocation` em `DevPortfolio/src/services/auth/profileSummary.ts`
+- [ ] T021 [US2] Exibir subtítulo com fallback de localização em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [ ] T022 [US2] Ajustar truncamento e responsividade do subtítulo em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
 
-**Checkpoint**: US2 funcional e validável sem dependência de US3.
+**Checkpoint**: US2 funcional e testável sem depender de US3.
 
 ---
 
-## Phase 5: User Story 3 - Robustez Visual em Falhas de Dados e Acesso (Priority: P3)
+## Phase 5: User Story 3 - Robustez Visual em Falhas de Dados (Priority: P3)
 
-**Goal**: Manter robustez visual em dados parciais e garantir acesso seguro por sessão/autenticação.
+**Goal**: Garantir robustez em dados incompletos e em falha de refresh com encerramento seguro de sessão.
 
-**Independent Test**: Em dados incompletos, sidebar mantém layout íntegro; sem sessão válida, app redireciona para login antes de exibir rotas internas; re-render interno sem troca de rota não dispara refresh.
+**Independent Test**: Em ausência de avatar/nome/location, layout permanece estável; em falha de refresh, sessão é encerrada e usuário redirecionado para login.
+
+### Tests for User Story 3
+
+- [ ] T023 [P] [US3] Adicionar casos de falha de refresh com logout em `DevPortfolio/src/context/AuthContext.test.tsx`
+- [ ] T024 [P] [US3] Adicionar teste de redirecionamento pós-falha de refresh em `DevPortfolio/src/router/ProtectedRoute.test.tsx`
 
 ### Implementation for User Story 3
 
-- [x] T018 [US3] Aplicar normalização defensiva para nome e iniciais em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
-- [x] T019 [US3] Ajustar fallback visual para avatar indisponível sem quebrar layout em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
-- [x] T020 [US3] Reforçar redirecionamento em sessão inválida no acesso interno em `DevPortfolio/src/router/ProtectedRoute.tsx`
-- [x] T021 [US3] Garantir refresh do perfil em mudança de pathname protegido e reload, sem refresh em re-render interno, em `DevPortfolio/src/context/AuthContext.tsx`
+- [ ] T025 [US3] Implementar tratamento de erro de refresh com limpeza de sessão em `DevPortfolio/src/context/AuthContext.tsx`
+- [ ] T026 [US3] Garantir redirecionamento imediato para login após sessão inválida em `DevPortfolio/src/router/ProtectedRoute.tsx`
+- [ ] T027 [US3] Ajustar fallback visual defensivo para falha de imagem em `DevPortfolio/src/components/sidebar/Sidebar.tsx`
+- [ ] T028 [US3] Ajustar estilos para manter integridade visual em estados degradados em `DevPortfolio/src/components/sidebar/Sidebar.module.css`
 
-**Checkpoint**: US3 funcional e validável isoladamente.
+**Checkpoint**: US3 funcional e validável de forma independente.
 
 ---
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-**Purpose**: Validação final, documentação e consistência geral da feature.
+**Purpose**: Consolidação final, documentação e validação completa.
 
-- [x] T022 [P] Atualizar decisões e rastreabilidade da feature em `specs/002-sidebar-github-profile/research.md`
-- [x] T023 [P] Atualizar modelo de dados final em `specs/002-sidebar-github-profile/data-model.md`
-- [x] T024 Executar validação automatizada do frontend via Docker Compose conforme `specs/002-sidebar-github-profile/quickstart.md`
-- [x] T025 Executar validação manual dos cenários de aceitação e registrar evidências em `specs/002-sidebar-github-profile/quickstart.md`
+- [ ] T029 [P] Atualizar decisões finais e rastreabilidade em `specs/002-sidebar-github-profile/research.md`
+- [ ] T030 [P] Atualizar transições finais de estado em `specs/002-sidebar-github-profile/data-model.md`
+- [ ] T031 [P] Atualizar roteiro e evidências de validação em `specs/002-sidebar-github-profile/quickstart.md`
+- [ ] T032 Executar suíte automatizada do frontend em `DevPortfolio/package.json`
+- [ ] T033 Executar validação manual dos cenários críticos de aceitação em `specs/002-sidebar-github-profile/quickstart.md`
 
 ---
 
@@ -102,77 +117,76 @@
 
 ### Phase Dependencies
 
-- Setup (Phase 1): inicia imediatamente.
-- Foundational (Phase 2): depende da conclusão do Setup e bloqueia user stories.
-- User Stories (Phase 3 a 5): dependem da conclusão da fase Foundational.
-- Polish (Phase 6): depende da conclusão das user stories desejadas.
+- **Phase 1 (Setup)**: inicia imediatamente.
+- **Phase 2 (Foundational)**: depende da Phase 1 e bloqueia todas as user stories.
+- **Phase 3-5 (User Stories)**: dependem da conclusão da Phase 2.
+- **Phase 6 (Polish)**: depende da conclusão das user stories selecionadas.
 
 ### User Story Dependencies
 
-- US1 (P1): começa após Foundational.
-- US2 (P2): começa após Foundational; usa base de dados/tipos da fase foundational.
-- US3 (P3): começa após Foundational; integra comportamento de US1/US2 mantendo testabilidade independente.
+- **US1 (P1)**: inicia após Foundational; não depende de US2/US3.
+- **US2 (P2)**: inicia após Foundational; usa a mesma base de projeção do US1, mas deve ser testável isoladamente.
+- **US3 (P3)**: inicia após Foundational; depende apenas da base de sessão/refresh e deve ser testável isoladamente.
 
 ### Within Each User Story
 
-- Ajustes de modelo/contrato antes de renderização final.
-- Regras de fallback antes de ajustes de estilo fino.
-- Validação de fluxo de acesso após integração de contexto/roteamento.
+- Testes primeiro, falhando antes da implementação.
+- Regras de domínio/utilitário antes da integração no componente.
+- Ajustes de estilo após comportamento funcional implementado.
 
 ### Parallel Opportunities
 
-- T003 e T004 podem rodar em paralelo.
-- T009 pode rodar em paralelo com T005-T008.
-- Em US1, T010 pode iniciar em paralelo e convergir em T011/T012.
-- Em US2, T014 e T015 podem rodar em paralelo.
-- Em Polish, T022 e T023 podem rodar em paralelo.
+- T002 e T003 podem rodar em paralelo.
+- T010 e T011 podem rodar em paralelo.
+- Em US1, T012 e T013 podem rodar em paralelo.
+- Em US2, T018 e T019 podem rodar em paralelo.
+- Em US3, T023 e T024 podem rodar em paralelo.
+- Em polish, T029, T030 e T031 podem rodar em paralelo.
 
 ---
 
 ## Parallel Example: User Story 1
 
 ```bash
-# Paralelizar preparação da US1
-Task: "T010 [US1] Integrar leitura de resumo de perfil no componente em DevPortfolio/src/components/sidebar/Sidebar.tsx"
-Task: "T013 [US1] Ajustar estilos do avatar para modo imagem/iniciais em DevPortfolio/src/components/sidebar/Sidebar.module.css"
+Task: "T012 [US1] Criar testes unitários da regra de nome e iniciais em DevPortfolio/src/services/auth/profileSummary.test.ts"
+Task: "T013 [US1] Criar teste de renderização do bloco de perfil no sidebar em DevPortfolio/src/components/sidebar/Sidebar.test.tsx"
 ```
 
 ## Parallel Example: User Story 2
 
 ```bash
-# Paralelizar propagação de location
-Task: "T014 [US2] Propagar location no modelo de perfil em DevPortfolio/src/services/auth/authStorage.ts"
-Task: "T015 [US2] Propagar location na resposta de serviço em DevPortfolio/src/services/auth/githubAuthService.ts"
+Task: "T018 [US2] Adicionar casos de fallback de localização em DevPortfolio/src/services/auth/profileSummary.test.ts"
+Task: "T019 [US2] Adicionar teste de subtítulo do sidebar com e sem localização em DevPortfolio/src/components/sidebar/Sidebar.test.tsx"
 ```
 
 ## Parallel Example: User Story 3
 
 ```bash
-# Paralelizar robustez visual e acesso
-Task: "T018 [US3] Aplicar normalização defensiva para nome e iniciais em DevPortfolio/src/components/sidebar/Sidebar.tsx"
-Task: "T020 [US3] Reforçar redirecionamento em sessão inválida no acesso interno em DevPortfolio/src/router/ProtectedRoute.tsx"
+Task: "T023 [US3] Adicionar casos de falha de refresh com logout em DevPortfolio/src/context/AuthContext.test.tsx"
+Task: "T024 [US3] Adicionar teste de redirecionamento pós-falha de refresh em DevPortfolio/src/router/ProtectedRoute.test.tsx"
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (US1)
+### MVP First (User Story 1 Only)
 
-1. Finalizar Setup + Foundational.
-2. Entregar US1 (nome/avatar com fallback).
-3. Validar US1 isoladamente como incremento de valor principal.
+1. Concluir Phase 1 e Phase 2.
+2. Entregar Phase 3 (US1).
+3. Validar US1 isoladamente antes de avançar.
 
 ### Incremental Delivery
 
-1. Entregar US1 (identidade visual principal no sidebar).
-2. Entregar US2 (localização + fallback explícito).
-3. Entregar US3 (robustez em falhas + controle de acesso por sessão).
-4. Fechar com Polish e validação final.
+1. Base compartilhada (Setup + Foundational).
+2. Entregar US1 e validar.
+3. Entregar US2 e validar.
+4. Entregar US3 e validar.
+5. Finalizar com polish e evidências.
 
 ### Parallel Team Strategy
 
-1. Time fecha Setup e Foundational em conjunto.
+1. Time fecha Setup + Foundational.
 2. Após base pronta:
    - Dev A: US1
    - Dev B: US2
@@ -183,7 +197,6 @@ Task: "T020 [US3] Reforçar redirecionamento em sessão inválida no acesso inte
 
 ## Notes
 
-- Formato de tarefa segue padrão obrigatório: `- [ ] Txxx [P?] [US?] Descrição com caminho`.
-- Tasks de Setup, Foundational e Polish não usam label de story.
-- Cada user story mantém checkpoint de teste independente.
-- Não há criação de novos testes como requisito explícito; validação usa suíte existente e cenários de aceitação.
+- Todas as tarefas seguem formato checklist obrigatório: `- [ ] Txxx [P?] [US?] Descrição com caminho`.
+- Labels `[US1]`, `[US2]`, `[US3]` aparecem apenas nas fases de user story.
+- Cada user story possui critério de teste independente.
