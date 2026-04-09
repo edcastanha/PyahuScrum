@@ -30,8 +30,9 @@ Regras de transição de estado:
    - login bem-sucedido com perfil válido.
    - sessão persistida com `isAuthenticated=true`.
 2. `Authenticated` -> `Authenticated(Refreshed)`:
-   - novo acesso autenticado aciona refresh de perfil.
+   - entrada em rota protegida por mudança de pathname ou reload aciona refresh de perfil.
    - dados de perfil da sessão são atualizados.
+   - re-renderização interna sem mudança de rota não aciona refresh.
 3. `Authenticated` -> `Unauthenticated`:
    - logout explícito, sessão removida.
    - ausência/invalidade de sessão em rota protegida redireciona para login.

@@ -13,6 +13,7 @@
 - Q: Como a localização deve ser exibida no subtítulo? → A: Option B - exibir localização completa do perfil; na ausência, usar "Localização não informada".
 - Q: Qual fallback visual deve ser usado para avatar ausente? → A: Option A - usar até 2 iniciais do nome exibido (nome -> login -> "Usuário").
 - Q: Como atualizar os dados de perfil após hidratação da sessão? → A: Refresh a cada novo acesso; sem sessão ou sem autenticação, redirecionar para login.
+- Q: O que define "novo acesso" para refresh do perfil? → A: Entrada em rota protegida por mudança de pathname ou reload da página; re-renderização interna isolada não dispara refresh.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -69,6 +70,7 @@ Como usuário autenticado, quero que o perfil do sidebar continue legível mesmo
 - Perfil autenticado com avatar indisponível temporariamente não deve quebrar o bloco visual do perfil.
 - Sessão parcialmente restaurada (ex.: sem location) deve continuar exibindo resumo consistente.
 - Sem sessão válida ou sem autenticação, o acesso deve ser redirecionado para a tela de login.
+- Re-renderizações internas sem mudança de pathname não devem acionar refresh adicional de perfil.
 
 ## Requirements *(mandatory)*
 
@@ -83,7 +85,7 @@ Como usuário autenticado, quero que o perfil do sidebar continue legível mesmo
 - **FR-007**: O sistema MUST aplicar fallback visual com até 2 iniciais do nome exibido quando o avatar não estiver disponível, preservando o layout.
 - **FR-008**: O sistema MUST manter o bloco de perfil estável em diferentes estados de dados, sem sobreposição ou quebra visual.
 - **FR-009**: O sistema MUST renderizar o resumo de perfil do sidebar com os dados persistidos na sessão local durante a hidratação da aplicação.
-- **FR-010**: O sistema MUST atualizar os dados de perfil do sidebar a cada novo acesso às rotas internas autenticadas.
+- **FR-010**: O sistema MUST atualizar os dados de perfil do sidebar quando houver entrada em rota protegida por mudança de pathname ou reload da página; re-renderizações internas sem mudança de rota MUST NOT disparar refresh.
 - **FR-011**: O sistema MUST redirecionar para login quando não houver sessão válida ou quando o usuário não estiver autenticado.
 
 ### Key Entities *(include if feature involves data)*
@@ -106,5 +108,5 @@ Como usuário autenticado, quero que o perfil do sidebar continue legível mesmo
 - Ao acessar rotas internas, o sistema valida sessão e autenticação antes de exibir o sidebar.
 - O resumo de perfil no sidebar não altera permissões nem controle de acesso, apenas exibição de identidade.
 - O comportamento de fallback deve priorizar clareza visual em vez de ocultar o bloco de perfil.
-- A estratégia de atualização do resumo de perfil nesta fase ocorre a cada novo acesso autenticado.
+- A estratégia de atualização do resumo de perfil nesta fase ocorre por entrada em rota protegida (pathname) e reload.
 - A atualização desta feature é restrita ao resumo de perfil do sidebar nesta fase.

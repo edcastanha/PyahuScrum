@@ -34,7 +34,8 @@ O bloco de perfil do sidebar deve sempre produzir:
 
 ## Refresh Contract
 
-- A cada novo acesso em rota interna autenticada, executar refresh dos dados de perfil para atualização do resumo.
+- Executar refresh dos dados de perfil ao entrar em rota protegida por mudança de pathname ou em reload da página.
+- Não executar refresh em re-renderizações internas sem mudança de rota.
 
 ## Test Contract
 
@@ -44,3 +45,4 @@ Casos obrigatórios:
 3. Sem `location` renderiza "Localização não informada".
 4. Sem `avatar_url` renderiza iniciais.
 5. Sem sessão/autenticação redireciona para login.
+6. Re-renderização interna sem mudança de pathname não dispara refresh.

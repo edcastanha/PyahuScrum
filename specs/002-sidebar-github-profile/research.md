@@ -26,11 +26,11 @@
 
 ## Decisão 4: Estratégia de atualização de perfil
 
-- Decision: Atualizar dados de perfil a cada novo acesso autenticado; sem sessão/autenticação, redirecionar para login.
-- Rationale: Reduz risco de dados obsoletos sem introduzir refresh manual adicional no fluxo principal.
+- Decision: Atualizar dados de perfil em entrada de rota protegida por mudança de pathname ou reload; não atualizar em re-renderizações internas. Sem sessão/autenticação, redirecionar para login.
+- Rationale: Mantém dados atuais sem gerar chamadas redundantes, com gatilho objetivo e testável.
 - Alternatives considered:
-  - Atualização apenas manual (rejeitado: maior chance de dados stale no sidebar).
-  - Reconsulta em toda navegação interna (rejeitado: custo de chamadas desnecessário e maior risco de rate limit).
+  - Atualização apenas manual (rejeitado: maior chance de desatualização visível).
+  - Atualização em toda renderização (rejeitado: excesso de chamadas e maior risco de rate limit).
 
 ## Decisão 5: Limite de escopo técnico
 

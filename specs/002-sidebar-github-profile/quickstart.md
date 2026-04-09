@@ -13,7 +13,7 @@
    - nome: primeiro nome -> login -> "Usuário"
    - localização: valor do perfil -> "Localização não informada"
    - avatar: imagem -> iniciais (até 2 caracteres)
-3. Garantir refresh de perfil a cada novo acesso autenticado.
+3. Garantir refresh de perfil em mudança de pathname protegido e em reload, sem refresh em re-renderizações internas.
 4. Garantir redirecionamento para login quando sessão/autenticação estiver ausente.
 
 ## 3) Validar localmente
@@ -29,8 +29,9 @@ docker compose -f ../infra/docker-compose.yml run --rm frontend npm test -- --wa
 
 1. Login com usuário GitHub válido.
 2. Navegar para rota interna e confirmar resumo do sidebar.
-3. Reacessar rota interna para validar refresh do perfil.
-4. Remover sessão local e confirmar redirecionamento para login.
+3. Navegar entre rotas protegidas para validar refresh por mudança de pathname.
+4. Forçar re-renderização interna sem trocar rota e validar ausência de refresh adicional.
+5. Remover sessão local e confirmar redirecionamento para login.
 
 ## 4) Critérios de pronto
 

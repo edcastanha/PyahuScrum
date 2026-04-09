@@ -7,15 +7,9 @@
 
 ## Summary
 
-Implementar e estabilizar a projeção do perfil autenticado no sidebar usando dados da sessão e refresh a cada novo acesso autenticado, com fallback explícito para nome, avatar e localização. A abordagem técnica mantém o fluxo frontend-only existente, reforça validação de sessão/redirecionamento para login e adiciona contratos de apresentação/testabilidade para reduzir regressões visuais.
+Implementar a projeção de perfil autenticado no sidebar com regras claras de fallback para nome, localização e avatar, além de refresh de perfil em entrada de rota protegida (mudança de pathname) e reload. O plano mantém escopo frontend-only em DevPortfolio, preserva fluxo de sessão local e reforça redirecionamento para login em ausência de sessão válida.
 
 ## Technical Context
-
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
 
 **Language/Version**: TypeScript 4.9+ (React 18 frontend)  
 **Primary Dependencies**: React, react-router-dom, Context API, fetch API, CSS Modules  
@@ -23,19 +17,19 @@ Implementar e estabilizar a projeção do perfil autenticado no sidebar usando d
 **Testing**: Jest + React Testing Library  
 **Target Platform**: Web (desktop e mobile responsivo)
 **Project Type**: single-project web app frontend (DevPortfolio)  
-**Performance Goals**: renderização do resumo de perfil sem bloqueio perceptível e refresh por acesso sem degradar navegação normal  
-**Constraints**: frontend-only, sem backend dedicado nesta fase, dependência da API pública do GitHub e limites de rate limit  
-**Scale/Scope**: ajuste focado no resumo de perfil do sidebar e fluxo de hidratação/refresh em rotas autenticadas
+**Performance Goals**: manter navegação fluida com refresh por pathname/reload sem chamadas redundantes em re-renderizações internas  
+**Constraints**: frontend-only, sem backend dedicado nesta fase, dependência da API pública do GitHub e rate limit público  
+**Scale/Scope**: mudanças concentradas em sidebar, contexto de auth, roteamento protegido e serviços de auth
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **I. Modularidade e Especificação Independente**: PASS. Escopo limitado ao módulo de navegação/sidebar com regras explícitas de sessão e fallback.
-- **II. Critérios de Aceite e Testabilidade**: PASS. Critérios mensuráveis definidos na spec (SC-001..SC-005) e estratégia de testes por camada definida neste plano.
-- **III. Documentação Viva e Rastreabilidade**: PASS. Artefatos da feature (`spec`, `plan`, `research`, `data-model`, `quickstart`, `contracts`) mantidos na pasta da feature.
-- **IV. Design e Experiência do Usuário**: PASS. Ajustes visuais preservam legibilidade, fallback amigável e responsividade existente.
-- **V. Evolução Guiada por Roadmap**: PASS. Mudança incremental alinhada ao roadmap frontend-only e sem ruptura de arquitetura.
+- I. Modularidade e Especificação Independente: PASS. Escopo limitado ao módulo de sidebar e auth/session.
+- II. Critérios de Aceite e Testabilidade: PASS. Critérios e cenários definidos na spec com cobertura para fallback e redirecionamento.
+- III. Documentação Viva e Rastreabilidade: PASS. Artefatos da feature em specs/002-sidebar-github-profile e rastreio com FR/SC.
+- IV. Design e Experiência do Usuário: PASS. Regras de fallback preservam clareza visual e consistência responsiva.
+- V. Evolução Guiada por Roadmap: PASS. Entrega incremental sem introdução de backend fora de escopo.
 
 **Gate Result (pre-research)**: PASS
 
@@ -74,15 +68,11 @@ DevPortfolio/
 │       └── auth/
 └── (tests co-localizados em *.test.ts[x])
 
-docs/
-├── prd/
-└── adr/
-
 specs/
 └── 002-sidebar-github-profile/
 ```
 
-**Structure Decision**: Manter arquitetura frontend única no diretório `DevPortfolio`, com mudanças concentradas em `components/sidebar`, `context/AuthContext`, `router/ProtectedRoute` e `services/auth`, preservando separação por domínio já existente.
+**Structure Decision**: manter arquitetura frontend única no diretório DevPortfolio, com alterações restritas a sidebar e serviços/contexto de autenticação.
 
 ## Complexity Tracking
 
