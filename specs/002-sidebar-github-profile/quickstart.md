@@ -32,6 +32,7 @@ docker compose -f ../infra/docker-compose.yml run --rm frontend npm test -- --wa
 3. Navegar entre rotas protegidas para validar refresh por mudança de pathname.
 4. Forçar re-renderização interna sem trocar rota e validar ausência de refresh adicional.
 5. Remover sessão local e confirmar redirecionamento para login.
+6. Simular falha no refresh de perfil em rota protegida e confirmar encerramento de sessão com redirecionamento para login.
 
 ## 4) Critérios de pronto
 
@@ -54,5 +55,7 @@ docker compose -f ../infra/docker-compose.yml run --rm frontend npm test -- --wa
    - Evidência: efeito em `Sidebar` dependente de `location.pathname`; regra formal e contrato refletidos em spec/contract.
 - Cenário: redirecionamento para login sem sessão/autenticação.
    - Evidência: `ProtectedRoute` exige `isAuthenticated` e `githubLogin`; caso contrário, redireciona para `/`.
+- Cenário: falha no refresh em rota protegida.
+   - Evidência: fluxo de autenticação deve limpar sessão e redirecionar para login quando houver erro de API/rede no refresh.
 - Validação automatizada de suporte:
    - Evidência: suíte executada via Docker Compose com 6/6 suites e 9/9 testes passando.

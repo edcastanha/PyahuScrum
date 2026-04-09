@@ -36,6 +36,7 @@ Regras de transição de estado:
 3. `Authenticated` -> `Unauthenticated`:
    - logout explícito, sessão removida.
    - ausência/invalidade de sessão em rota protegida redireciona para login.
+   - falha de refresh do perfil em rota protegida encerra sessão e redireciona para login.
 
 ## Entity: SidebarProfileSummary
 

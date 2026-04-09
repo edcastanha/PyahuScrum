@@ -38,3 +38,11 @@
 - Rationale: Alinhado ao PRD atualizado e à estratégia incremental do projeto.
 - Alternatives considered:
   - Adicionar backend para cache/autenticação nesta etapa (rejeitado: fora de escopo da release atual).
+
+## Decisão 6: Comportamento em falha no refresh
+
+- Decision: Em falha de rede/API durante refresh em rota protegida, encerrar sessão autenticada e redirecionar para login.
+- Rationale: Mantém consistência do estado de autenticação e evita exibir identidade potencialmente desatualizada como válida.
+- Alternatives considered:
+  - Manter último perfil em sessão e exibir aviso (rejeitado: conflita com decisão de segurança de sessão desta feature).
+  - Ocultar apenas bloco de perfil e manter acesso interno (rejeitado: pode criar estado de sessão inconsistente).
