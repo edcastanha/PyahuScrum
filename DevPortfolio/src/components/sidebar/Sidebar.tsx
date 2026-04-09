@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import styles from './Sidebar.module.css';
+import { useAuth } from '../../context/AuthContext';
+import { buildSidebarProfileSummary } from '../../services/auth/profileSummary';
 import { 
   Gauge, 
   FolderKanban, 
@@ -15,6 +17,10 @@ import {
 const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const { isAuthenticated, profile, githubLogin, refreshProfile } = useAuth();
+  const location = useLocation();
+  const summary = buildSidebarProfileSummary(profile, githubLogin);
   
   // Detecta se a tela é móvel
   useEffect(() => {
@@ -29,6 +35,18 @@ const Sidebar: React.FC = () => {
       window.removeEventListener('resize', checkIfMobile);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    void refreshProfile();
+  }, [isAuthenticated, location.pathname, refreshProfile]);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [summary.avatarSource]);
   
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -69,10 +87,21 @@ const Sidebar: React.FC = () => {
       </div>
       <footer className={styles.footer}>
         <div className={styles.profile}>
-            <div className={styles.avatar}>FS</div>
+            <div className={styles.avatar}>
+              {summary.avatarSource && !avatarFailed ? (
+                <img
+                  className={styles.avatarImage}
+                  src={summary.avatarSource}
+                  alt={`Avatar de ${summary.displayName}`}
+                  onError={() => setAvatarFailed(true)}
+                />
+              ) : (
+                <span>{summary.avatarFallback}</span>
+              )}
+            </div>
             <div className={styles.profileInfo}>
-                <p>Full Stack Dev</p>
-                <span>React • Angular • Django</span>
+                <p>{summary.displayName}</p>
+                <span>{summary.displayLocation}</span>
             </div>
         </div>
       </footer>

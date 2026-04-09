@@ -27,17 +27,17 @@ Este documento detalha as fases e tarefas para a implementação da aplicação 
 
 **Objetivo:** Integrar um editor de Markdown e permitir o gerenciamento de documentação por projeto.
 
-- [ ] **Tarefa 3.1:** Pesquisar e escolher uma biblioteca de editor Markdown para React (ex: `react-markdown`, `react-mde`).
-- [ ] **Tarefa 3.2:** Criar a seção de documentação na página de detalhes de um projeto.
-- [ ] **Tarefa 3.3:** Implementar a funcionalidade para criar/editar o `README.md` de um projeto.
-- [ ] **Tarefa 3.4:** Desenvolver a interface para listar e visualizar ADRs (Registros de Decisão de Arquitetura).
-- [ ] **Tarefa 3.5:** Criar o formulário para adicionar um novo ADR a um projeto.
+- [x] **Tarefa 3.1:** Pesquisar e escolher uma biblioteca de editor Markdown para React (ex: `react-markdown`, `react-mde`).
+- [x] **Tarefa 3.2:** Criar a seção de documentação na página de detalhes de um projeto.
+- [x] **Tarefa 3.3:** Implementar a funcionalidade para criar/editar o `README.md` de um projeto.
+- [x] **Tarefa 3.4:** Desenvolver a interface para listar e visualizar ADRs (Registros de Decisão de Arquitetura).
+- [x] **Tarefa 3.5:** Criar o formulário para adicionar um novo ADR a um projeto.
 
 ## Fase 4: Histórias de Usuário e Board Kanban (Sprint 4)
 
 **Objetivo:** Implementar o sistema de gerenciamento de histórias de usuário.
 
-- [ ] **Tarefa 4.1:** Desenvolver o componente de card para histórias de usuário (`UserStoryCard`).
+- [x] **Tarefa 4.1:** Desenvolver o componente de card para histórias de usuário (`UserStoryCard`).
 - [ ] **Tarefa 4.2:** Criar a interface da board Kanban com colunas ("To Do", "In Progress", "Done").
 - [ ] **Tarefa 4.3:** Implementar a funcionalidade de arrastar e soltar (drag-and-drop) para mover os cards entre as colunas.
 - [ ] **Tarefa 4.4:** Desenvolver o formulário para criar e editar histórias de usuário.

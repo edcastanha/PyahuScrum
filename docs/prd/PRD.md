@@ -65,3 +65,30 @@ O objetivo principal é criar uma ferramenta centralizada que não apenas exiba 
 
 - Desenvolvedores Full Stack que desejam uma maneira mais sofisticada de organizar e apresentar seu portfólio.
 - Profissionais de TI que precisam documentar e gerenciar seus projetos pessoais ou de estudo.
+
+## 6. Atualização de Escopo da Fase Atual (2026-04)
+
+### 6.1. Diretriz de Implementação
+- Esta fase está definida como **frontend-only** no projeto `DevPortfolio`, sem backend dedicado e sem persistência em MongoDB.
+- A autenticação inicial é baseada em consulta à API pública do GitHub no endpoint `https://api.github.com/users/{username}`.
+
+### 6.2. Requisitos da Fase Atual
+- A home deve funcionar como tela de login.
+- O login deve validar username público do GitHub.
+- O app deve persistir sessão local (localStorage) para manter estado autenticado após refresh.
+- O app deve proteger rotas internas para usuários não autenticados.
+- O app deve oferecer logout limpando sessão local.
+- O app deve exibir mensagens de erro para usuário inexistente, rate limit e falha de rede.
+
+### 6.3. Fora de Escopo Nesta Fase
+- OAuth server-side com segredo de aplicação.
+- Backend dedicado para autenticação.
+- Persistência de dados de autenticação em MongoDB.
+
+### 6.4. Critérios de Sucesso da Fase
+- Login concluído com username válido em até 3 segundos em rede estável.
+- Sessão local restaurada corretamente após recarregar a página.
+- Logout removendo sessão em menos de 500ms.
+
+### 6.5. Evolução Planejada
+- Integração futura com backend e persistência em banco poderá substituir sessão local sem quebrar a experiência do usuário.
