@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: GitHub Users API Contract (Consumed by Frontend)
+  version: 1.0.0
+  description: Contrato mínimo do endpoint público consumido na autenticação frontend-only.
+servers:
+  - url: https://api.github.com
+paths:
+  /users/{username}:
+    get:
+      summary: Buscar perfil público do usuário GitHub
+      operationId: getGithubUser
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Perfil encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitHubUser'
+        '404':
+          description: Usuário não encontrado
+        '403':
+          description: Rate limit ou acesso bloqueado
+components:
+  schemas:
+    GitHubUser:
+      type: object
+      required: [login, id, avatar_url, public_repos, followers]
+      properties:
+        login:
+          type: string
+        id:
+          type: integer
+        avatar_url:
+          type: string
+        name:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        public_repos:
+          type: integer
+        followers:
+          type: integer

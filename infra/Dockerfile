@@ -1,21 +1,17 @@
-# Dockerfile para ambiente de desenvolvimento do DevPortfolio Interactive
-# Imagem base Node.js LTS
-FROM node:22-slim
+# Dockerfile para desenvolvimento e build local do frontend
+FROM node:22-slim AS base
 
-# Diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de dependências
-COPY ../DevPortfolio/package*.json ./
+# COPY é relativo ao build context (repo root em docker-compose)
+COPY DevPortfolio/package*.json ./
+RUN npm install
 
-# Instala as dependências
-RUN npm install 
+COPY DevPortfolio/ ./
 
-# Copia o restante do código
-COPY ../DevPortfolio/ .
-
-# Expõe a porta padrão do React
+FROM base AS dev
 EXPOSE 3000
-
-# Comando padrão para iniciar o app
 CMD ["npm", "start"]
+
+FROM base AS build
+CMD ["npm", "run", "build"]

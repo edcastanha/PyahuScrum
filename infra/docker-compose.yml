@@ -3,6 +3,7 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile
+      target: dev
     container_name: devportfolio-frontend
     ports:
       - "5000:3000"
@@ -11,4 +12,31 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
     command: npm start
+
+  frontend-build:
+    profiles: ["build"]
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: build
+    container_name: devportfolio-frontend-build
+    volumes:
+      - ../DevPortfolio/build:/app/build
+    environment:
+      - NODE_ENV=production
+    command: npm run build
+
+  mongodb:
+    image: mongo:7
+    container_name: devportfolio-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=devportfolio
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
