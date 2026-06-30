@@ -1,0 +1,124 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Column header */
+.columnHeader {
+  margin-bottom: 1rem;
+}
+
+.columnTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.columnTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.columnCount {
+  background-color: #e2e8f0;
+  color: #64748B;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+}
+
+/* Progress bar */
+.progressBar {
+  height: 4px;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.progressTodo       { background-color: #94A3B8; }
+.progressInprogress { background-color: #3B82F6; }
+.progressDone       { background-color: #10B981; }
+
+/* Drop zone */
+.dropZone {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 2px dashed #e2e8f0;
+  min-height: 520px;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.todo       { background-color: #f8fafc; border-color: #e2e8f0; }
+.inprogress { background-color: #EFF6FF; border-color: #BFDBFE; }
+.done       { background-color: #F0FDF4; border-color: #BBF7D0; }
+
+.draggingOver {
+  border-color: #3B82F6 !important;
+  background-color: #EFF6FF !important;
+  box-shadow: inset 0 0 0 1px #93C5FD;
+}
+
+/* Card list */
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: #94A3B8;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.emptyTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 0.2rem;
+}
+
+.emptyHint {
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+@media (max-width: 1024px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+
+  .dropZone {
+    min-height: 200px;
+  }
+}

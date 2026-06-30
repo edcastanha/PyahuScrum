@@ -1,7 +1,7 @@
 import React from 'react';
-import { UserStory } from '../../entities/UserStory';
-import { Card, CardBody, Typography, Chip, Button } from '@material-tailwind/react';
 import { Draggable } from 'react-beautiful-dnd';
+import { UserStory } from '../../entities/UserStory';
+import styles from './UserStoryCard.module.css';
 
 interface UserStoryCardProps {
   story: UserStory;
@@ -9,13 +9,48 @@ interface UserStoryCardProps {
   onEdit: (story: UserStory) => void;
 }
 
-const priorityColors = {
-  low: 'blue',
-  medium: 'orange',
-  high: 'red',
+const priorityConfig: Record<UserStory['priority'], { label: string; cls: string; icon: string }> = {
+  low:    { label: 'Baixa', cls: styles.priorityLow,    icon: '↓' },
+  medium: { label: 'Média', cls: styles.priorityMedium, icon: '→' },
+  high:   { label: 'Alta',  cls: styles.priorityHigh,   icon: '↑' },
 };
 
+const statusConfig: Record<UserStory['status'], { label: string; cls: string }> = {
+  todo:       { label: 'A Fazer',      cls: styles.statusTodo },
+  inprogress: { label: 'Em Progresso', cls: styles.statusInprogress },
+  done:       { label: 'Concluído',    cls: styles.statusDone },
+};
+
+const EditIcon: React.FC = () => (
+  <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+);
+
+const CheckIcon: React.FC = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const DragIcon: React.FC = () => (
+  <svg className={styles.dragHandle} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 15h18v-2H3v2zm0 4h18v-2H3v2zm0-8h18V9H3v2zm0-6v2h18V5H3z" />
+  </svg>
+);
+
 const UserStoryCard: React.FC<UserStoryCardProps> = ({ story, index, onEdit }) => {
+  const priority = priorityConfig[story.priority];
+  const status = statusConfig[story.status];
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit(story);
+  };
+
   return (
     <Draggable draggableId={story.id.toString()} index={index}>
       {(provided, snapshot) => (
@@ -23,89 +58,69 @@ const UserStoryCard: React.FC<UserStoryCardProps> = ({ story, index, onEdit }) =
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`mb-4 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+          className={`${styles.wrapper}${snapshot.isDragging ? ` ${styles.dragging}` : ''}`}
         >
-          <Card 
-            className="w-full"
-            onPointerEnterCapture={undefined}
-            onPointerLeaveCapture={undefined}
-            placeholder=""
-            onResize={undefined}
-            onResizeCapture={undefined}
-          >
-            <CardBody
-              onPointerEnterCapture={undefined}
-              onPointerLeaveCapture={undefined}
-              placeholder=""
-              onResize={undefined}
-              onResizeCapture={undefined}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <Typography 
-                  variant="h6" 
-                  color="blue-gray" 
-                  className="flex-grow"
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
-                  placeholder=""
-                  onResize={undefined}
-                  onResizeCapture={undefined}
-                >
-                  {story.title}
-                </Typography>
-                <div className="flex-shrink-0 flex items-center gap-2">
-                    <Chip
-                      value={story.priority}
-                      color={priorityColors[story.priority] as any}
-                      size="sm"
-                    />
-                    <Button 
-                      variant="text" 
-                      size="sm" 
-                      className="py-1 px-2" 
-                      onClick={() => onEdit(story)}
-                      onPointerEnterCapture={undefined}
-                      onPointerLeaveCapture={undefined}
-                      placeholder=""
-                      onResize={undefined}
-                      onResizeCapture={undefined}
-                    >
-                        Editar
-                    </Button>
+          <div className={styles.card}>
+            <div className={styles.cardBody}>
+              {/* Título + ações */}
+              <div className={styles.cardTop}>
+                <div className={styles.titleArea}>
+                  <h4 className={styles.title}>{story.title}</h4>
+                  <div className={styles.badges}>
+                    <span className={`${styles.badge} ${priority.cls}`}>
+                      <span aria-hidden="true">{priority.icon}</span>
+                      {priority.label}
+                    </span>
+                    <span className={`${styles.badge} ${status.cls}`}>
+                      {status.label}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <Typography 
-                color="gray" 
-                className="font-normal mb-4"
-                onPointerEnterCapture={undefined}
-                onPointerLeaveCapture={undefined}
-                placeholder=""
-                onResize={undefined}
-                onResizeCapture={undefined}
-              >
-                {story.description}
-              </Typography>
-              <div>
-                <Typography 
-                  variant="small" 
-                  color="blue-gray" 
-                  className="font-semibold"
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
-                  placeholder=""
-                  onResize={undefined}
-                  onResizeCapture={undefined}
+
+                <button
+                  type="button"
+                  className={styles.editBtn}
+                  onClick={handleEdit}
+                  aria-label={`Editar história: ${story.title}`}
                 >
-                  Critérios de Aceite:
-                </Typography>
-                <ul className="list-disc list-inside pl-4 mt-1">
-                  {story.acceptanceCriteria.map((criterion, i) => (
-                    <li key={i} className="text-sm text-gray-600">{criterion}</li>
+                  <EditIcon />
+                  Editar
+                </button>
+              </div>
+
+              {/* Descrição */}
+              <p className={styles.description}>{story.description}</p>
+
+              {/* Critérios de aceite */}
+              <div className={styles.criteria}>
+                <div className={styles.criteriaHeader}>
+                  <CheckIcon />
+                  <span className={styles.criteriaLabel}>
+                    Critérios ({story.acceptanceCriteria.length})
+                  </span>
+                </div>
+                <ul className={styles.criteriaList}>
+                  {story.acceptanceCriteria.slice(0, 2).map((criterion, i) => (
+                    <li key={i} className={styles.criteriaItem}>
+                      <span className={styles.criteriaDot} aria-hidden="true" />
+                      <span>{criterion}</span>
+                    </li>
                   ))}
+                  {story.acceptanceCriteria.length > 2 && (
+                    <li className={styles.criteriaMore}>
+                      +{story.acceptanceCriteria.length - 2} critérios adicionais
+                    </li>
+                  )}
                 </ul>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+
+            {/* Footer */}
+            <div className={styles.cardFooter}>
+              <span className={styles.storyId}>#{story.id}</span>
+              <DragIcon />
+            </div>
+          </div>
         </div>
       )}
     </Draggable>
