@@ -23,6 +23,10 @@ const LoginPage: React.FC = () => {
   return (
     <div className={styles.container}>
       <form className={styles.card} onSubmit={handleSubmit}>
+        <div className={styles.brandMark} aria-hidden="true">
+          <div className={styles.brandIcon}>PF</div>
+          <span className={styles.brandName}>Portfólio</span>
+        </div>
         <h1 className={styles.title}>Entrar com GitHub</h1>
         <p className={styles.subtitle}>Use seu username público para acessar o portfólio.</p>
 

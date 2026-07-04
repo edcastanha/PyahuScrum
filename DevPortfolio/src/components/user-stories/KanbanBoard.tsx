@@ -30,14 +30,18 @@ const DROP_ZONE_CLS: Record<ColumnId, string> = {
   done:       styles.done,
 };
 
-const EmptyState: React.FC = () => (
+const EmptyState: React.FC<{ boardIsEmpty: boolean }> = ({ boardIsEmpty }) => (
   <div className={styles.emptyState}>
     <svg className={styles.emptyIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
     </svg>
-    <p className={styles.emptyTitle}>Nenhuma história</p>
-    <p className={styles.emptyHint}>Arraste cards para esta coluna</p>
+    <p className={styles.emptyTitle}>Coluna vazia</p>
+    <p className={styles.emptyHint}>
+      {boardIsEmpty
+        ? "Use o botão 'Nova História' para criar a primeira"
+        : 'Arraste cards para esta coluna'}
+    </p>
   </div>
 );
 
@@ -69,7 +73,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ stories, onDragEnd, onEditSto
                 <div className={styles.progressBar} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
                   <div
                     className={`${styles.progressFill} ${PROGRESS_CLS[col.id]}`}
-                    style={{ width: `${pct}%` }}
+                    style={{ transform: `scaleX(${pct / 100})` }}
                   />
                 </div>
               </div>
@@ -96,7 +100,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ stories, onDragEnd, onEditSto
                         />
                       ))}
                       {provided.placeholder}
-                      {colStories.length === 0 && <EmptyState />}
+                      {colStories.length === 0 && <EmptyState boardIsEmpty={stories.length === 0} />}
                     </div>
                   </div>
                 )}
