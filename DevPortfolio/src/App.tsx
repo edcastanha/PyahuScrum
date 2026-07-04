@@ -1,25 +1,23 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import MainLayout from './layout/MainLayout';
-import DashboardPage from './pages/dashboard/DashboardPage';
-import ProjectsPage from './pages/projects/ProjectsPage';
-import UserStoriesPage from './pages/user-stories/UserStoriesPage';
 import { ToastProvider } from './context/ToastContext';
-import { ThemeProvider } from '@material-tailwind/react';
-import './App.css';
-
-import DocumentationPage from './pages/documentation/DocumentationPage';
-import LoginPage from './pages/auth/LoginPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './router/ProtectedRoute';
+import './App.css';
 
+const LoginPage        = lazy(() => import('./pages/auth/LoginPage'));
+const DashboardPage    = lazy(() => import('./pages/dashboard/DashboardPage'));
+const ProjectsPage     = lazy(() => import('./pages/projects/ProjectsPage'));
+const UserStoriesPage  = lazy(() => import('./pages/user-stories/UserStoriesPage'));
+const DocumentationPage = lazy(() => import('./pages/documentation/DocumentationPage'));
 
 function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <Router>
+    <ToastProvider>
+      <AuthProvider>
+        <Router>
+          <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<LoginPage />} />
               <Route
@@ -64,10 +62,10 @@ function App() {
               />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </Router>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+          </Suspense>
+        </Router>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
