@@ -1,6 +1,6 @@
 .activityItem {
   padding: 1rem 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--clr-border);
 }
 
 .activityItem:last-child {
@@ -16,13 +16,13 @@
 
 .activityTitle {
   font-weight: 600;
-  color: #0F172A;
+  color: var(--clr-ink);
   font-size: 0.95rem;
 }
 
 .activityTimestamp {
   font-size: 0.85rem;
-  color: #94A3B8;
+  color: var(--clr-ink-subtle);
   text-align: right;
 }
 
@@ -32,6 +32,6 @@
 
 .activityMessage {
   font-size: 0.9rem;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   line-height: 1.4;
 }

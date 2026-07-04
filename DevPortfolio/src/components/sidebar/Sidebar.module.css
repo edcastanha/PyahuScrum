@@ -1,14 +1,14 @@
 .sidebar {
   background-color: #fff;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   display: flex;
   flex-direction: column;
   width: 260px;
   height: 100vh;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--clr-border);
   padding: 1.5rem;
   box-sizing: border-box;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s var(--ease-quint);
 }
 
 .logo {
@@ -17,7 +17,7 @@
   gap: 0.5rem;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #0F172A;
+  color: var(--clr-ink);
   margin-bottom: 2rem;
 }
 
@@ -36,18 +36,18 @@
   padding: 0.75rem;
   border-radius: 6px;
   text-decoration: none;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   font-weight: 500;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .navigation a:hover, .quickLinks a:hover {
-  background-color: #f1f5f9;
+  background-color: var(--clr-surface-2);
 }
 
 .navigation a.active {
-  background-color: #EFF6FF;
-  color: #1D4ED8;
+  background-color: var(--clr-blue-tint);
+  color: var(--clr-blue-700);
 }
 
 .quickLinks {
@@ -56,7 +56,7 @@
 
 .footer {
     padding-top: 1.5rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--clr-border);
 }
 
 .profile {
@@ -69,7 +69,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #10B981;
+    background-color: var(--clr-green);
     color: white;
     display: flex;
     align-items: center;
@@ -87,12 +87,12 @@
 .profileInfo p {
     margin: 0;
     font-weight: 600;
-    color: #0F172A;
+    color: var(--clr-ink);
 }
 
 .profileInfo span {
     font-size: 0.875rem;
-    color: #64748B;
+    color: var(--clr-ink-muted);
   display: block;
   max-width: 170px;
   overflow: hidden;
@@ -118,7 +118,7 @@
     top: 1rem;
     z-index: 1000;
     background-color: #fff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--clr-border);
     border-radius: 4px;
     width: 40px;
     height: 40px;

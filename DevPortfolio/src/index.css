@@ -1,3 +1,50 @@
+:root {
+  /* Ink — text hierarchy (slate scale) */
+  --clr-ink:        #0F172A;   /* slate-900  primary headings, body */
+  --clr-ink-muted:  #64748B;   /* slate-500  secondary text, captions */
+  --clr-ink-subtle: #94A3B8;   /* slate-400  placeholder, hint, icon */
+  --clr-ink-600:    #475569;   /* slate-600  body text, slate-chip text */
+  --clr-gray-700:   #374151;   /* gray-700   ghost button text, labels */
+
+  /* Surfaces */
+  --clr-canvas:    #FFFFFF;
+  --clr-surface:   #F8FAFC;    /* slate-50   page bg, input bg */
+  --clr-surface-2: #F1F5F9;    /* slate-100  hover bg, slate-chip bg */
+
+  /* Borders */
+  --clr-border:    #E2E8F0;    /* slate-200  default border */
+  --clr-border-2:  #CBD5E1;    /* slate-300  hover border, active divider */
+  --clr-gray-300:  #D1D5DB;    /* gray-300   input border */
+
+  /* Blue — primary action */
+  --clr-blue:      #3B82F6;    /* blue-500 */
+  --clr-blue-deep: #2563EB;    /* blue-600   hover */
+  --clr-blue-700:  #1D4ED8;    /* blue-700   chip text */
+  --clr-blue-tint: #EFF6FF;    /* blue-50    chip bg */
+  --clr-blue-200:  #BFDBFE;    /* blue-200   chip border */
+
+  /* Green — success / completed */
+  --clr-green:      #10B981;   /* emerald-500 */
+  --clr-green-700:  #15803D;   /* green-700   chip text */
+  --clr-green-tint: #F0FDF4;   /* green-50    chip bg */
+  --clr-green-200:  #BBF7D0;   /* green-200   chip border */
+
+  /* Amber — warning */
+  --clr-amber-700:  #B45309;   /* amber-700   chip text */
+  --clr-amber-tint: #FFFBEB;   /* amber-50    chip bg */
+  --clr-amber-200:  #FDE68A;   /* amber-200   chip border */
+
+  /* Red — error / danger */
+  --clr-red:       #DC2626;    /* red-600     error text */
+  --clr-red-soft:  #EF4444;    /* red-500     required indicator */
+  --clr-red-700:   #BE123C;    /* rose-700    chip text */
+  --clr-red-tint:  #FFF1F2;    /* rose-50     chip bg */
+  --clr-red-200:   #FECDD3;    /* rose-200    chip border */
+
+  /* Easing */
+  --ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

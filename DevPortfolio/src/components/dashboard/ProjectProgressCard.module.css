@@ -4,13 +4,13 @@
   padding: 1.25rem;
   margin-bottom: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--clr-border);
   transition: box-shadow 0.2s;
 }
 
 .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
-  border-color: #cbd5e1;
+  border-color: var(--clr-border-2);
 }
 
 .cardHeader {
@@ -23,7 +23,7 @@
 .cardHeader span:first-child {
   font-weight: 600;
   font-size: 1rem;
-  color: #0F172A;
+  color: var(--clr-ink);
 }
 
 .status {
@@ -36,29 +36,29 @@
 }
 
 .active {
-  background-color: #EFF6FF;
-  color: #1D4ED8;
+  background-color: var(--clr-blue-tint);
+  color: var(--clr-blue-700);
 }
 
 .completed {
-  background-color: #F0FDF4;
-  color: #15803D;
+  background-color: var(--clr-green-tint);
+  color: var(--clr-green-700);
 }
 
 .inactive {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: var(--clr-surface-2);
+  color: var(--clr-ink-600);
 }
 
 .description {
   font-size: 0.875rem;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   margin-bottom: 0.75rem;
 }
 
 .progressBarContainer {
   height: 0.5rem;
-  background-color: #e2e8f0;
+  background-color: var(--clr-border);
   border-radius: 0.25rem;
   overflow: hidden;
   margin-bottom: 0.5rem;
@@ -66,13 +66,13 @@
 
 .progressBar {
   height: 100%;
-  background-color: #3B82F6;
+  background-color: var(--clr-blue);
   border-radius: 0.25rem;
 }
 
 .progressText {
   font-size: 0.75rem;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   text-align: right;
 }
   

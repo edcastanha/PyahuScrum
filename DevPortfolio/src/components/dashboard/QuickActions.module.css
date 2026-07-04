@@ -27,12 +27,12 @@
 
 .actionCard:hover {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.09);
-  border-color: #e2e8f0;
+  border-color: var(--clr-border);
 }
 
 .actionCard:focus-visible {
   outline: none;
-  border-color: #3B82F6;
+  border-color: var(--clr-blue);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
@@ -51,13 +51,13 @@
 
 .actionTitle {
   font-weight: 500;
-  color: #0F172A;
+  color: var(--clr-ink);
   font-size: 0.95rem;
   margin: 0;
 }
 
 .actionDescription {
   font-size: 0.85rem;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   margin: 0.25rem 0 0;
 }
