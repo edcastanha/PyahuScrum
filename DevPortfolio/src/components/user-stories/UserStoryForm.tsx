@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserStory } from '../../entities/UserStory';
@@ -16,6 +16,19 @@ interface UserStoryFormProps {
 const UserStoryForm: React.FC<UserStoryFormProps> = ({ story, projects, onSave, onCancel }) => {
   const defaultCriteria = story?.acceptanceCriteria?.length ? story.acceptanceCriteria : [''];
   const [criteria, setCriteria] = React.useState<string[]>(defaultCriteria);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    modalRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onCancel]);
 
   const {
     register,
@@ -60,11 +73,18 @@ const UserStoryForm: React.FC<UserStoryFormProps> = ({ story, projects, onSave, 
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.modal}>
+      <div
+        ref={modalRef}
+        className={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="story-form-title"
+        tabIndex={-1}
+      >
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Header */}
           <div className={styles.modalHeader}>
-            <h2 className={styles.modalTitle}>
+            <h2 id="story-form-title" className={styles.modalTitle}>
               {story ? 'Editar História' : 'Nova História de Usuário'}
             </h2>
             <button

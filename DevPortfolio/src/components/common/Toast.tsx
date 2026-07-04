@@ -43,12 +43,20 @@ const Toast: React.FC<ToastProps> = ({
   };
 
   return (
-    <div className={`${styles.toast} ${styles[type]}`}>
+    <div
+      className={`${styles.toast} ${styles[type]}`}
+      role={type === 'error' || type === 'warning' ? 'alert' : 'status'}
+      aria-live={type === 'error' || type === 'warning' ? 'assertive' : 'polite'}
+    >
       <div className={styles.content}>
         {renderIcon()}
         <p>{message}</p>
       </div>
-      <button onClick={onClose} className={styles.closeButton}>
+      <button
+        onClick={onClose}
+        className={styles.closeButton}
+        aria-label="Fechar notificação"
+      >
         <XCircle size={16} />
       </button>
     </div>

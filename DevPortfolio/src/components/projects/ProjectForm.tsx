@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Project } from '../../entities/Project';
 import styles from './ProjectForm.module.css';
 
@@ -15,6 +15,20 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) 
     status: 'inactive',
     progress: 0,
   });
+
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    modalRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onCancel]);
 
   useEffect(() => {
     if (project) {
@@ -43,9 +57,16 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) 
 
   return (
     <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
+      <div
+        ref={modalRef}
+        className={styles.modalContent}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-form-title"
+        tabIndex={-1}
+      >
         <form onSubmit={handleSubmit}>
-          <h2>{project ? 'Editar Projeto' : 'Adicionar Projeto'}</h2>
+          <h2 id="project-form-title">{project ? 'Editar Projeto' : 'Adicionar Projeto'}</h2>
           <div className={styles.formGroup}>
             <label htmlFor="name">Nome do Projeto</label>
             <input

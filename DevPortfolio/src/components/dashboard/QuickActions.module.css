@@ -18,12 +18,22 @@
   gap: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  border: 1px solid transparent;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
 }
 
 .actionCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.09);
+  border-color: #e2e8f0;
+}
+
+.actionCard:focus-visible {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .iconWrapper {
