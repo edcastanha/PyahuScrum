@@ -1,3 +1,19 @@
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -9,6 +25,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: overlayFadeIn 0.18s ease-out both;
 }
 
 .modalContent {
@@ -19,6 +36,11 @@
   max-width: 500px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   color: #0f172a;
+  animation: modalSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.modalContent:focus {
+  outline: none;
 }
 
 .modalContent h2 {
@@ -87,7 +109,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: 0.95rem;
-  transition: all 0.2s;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .saveButton {
@@ -107,5 +129,5 @@
 
 .cancelButton:hover {
   background-color: #f8fafc;
-  border-color: #9CA3AF;
+  border-color: #94A3B8;
 }

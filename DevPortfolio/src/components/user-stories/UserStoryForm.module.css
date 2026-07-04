@@ -1,3 +1,19 @@
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 /* Overlay */
 .overlay {
   position: fixed;
@@ -8,6 +24,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  animation: overlayFadeIn 0.18s ease-out both;
 }
 
 /* Modal */
@@ -21,6 +38,11 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  animation: modalSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.modal:focus {
+  outline: none;
 }
 
 /* Header */
@@ -107,7 +129,7 @@
 
 .input::placeholder,
 .textarea::placeholder {
-  color: #9CA3AF;
+  color: #94A3B8;
 }
 
 .input:focus,
@@ -204,7 +226,7 @@
 }
 
 .criteriaInput::placeholder {
-  color: #9CA3AF;
+  color: #94A3B8;
 }
 
 .criteriaInput:focus {
@@ -265,7 +287,7 @@
 
 .cancelBtn:hover {
   background-color: #f9fafb;
-  border-color: #9CA3AF;
+  border-color: #94A3B8;
 }
 
 .submitBtn {
