@@ -10,6 +10,12 @@ import { useToast } from '../../context/ToastContext';
 import { Project } from '../../entities/Project';
 import styles from './UserStoriesPage.module.css';
 
+const COLUMN_LABELS: Record<string, string> = {
+  todo:       'A Fazer',
+  inprogress: 'Em Progresso',
+  done:       'Concluído',
+};
+
 const PlusIcon: React.FC = () => (
   <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -44,9 +50,10 @@ const UserStoriesPage: React.FC = () => {
 
     if (updatedStory) {
       setStories(prev => prev.map(s => (s.id === storyId ? { ...s, status: newStatus } : s)));
-      showToast('success', `"${updatedStory.title}" movida para ${destination.droppableId}.`);
+      const colLabel = COLUMN_LABELS[destination.droppableId] ?? destination.droppableId;
+      showToast('success', `"${updatedStory.title}" movida para ${colLabel}.`);
     } else {
-      showToast('error', 'Não foi possível mover a história.');
+      showToast('error', 'Não foi possível mover a história. Tente novamente.');
     }
   };
 

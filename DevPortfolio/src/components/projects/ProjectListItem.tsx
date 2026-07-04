@@ -44,7 +44,7 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit, onDe
       <div className={styles.progressBarContainer}>
         <div
           className={styles.progressBar}
-          style={{ width: `${project.progress}%` }}
+          style={{ transform: `scaleX(${project.progress / 100})` }}
         ></div>
       </div>
       <span>{project.progress}%</span>
