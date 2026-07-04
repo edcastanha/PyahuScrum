@@ -1,6 +1,6 @@
 .mainLayout {
   display: flex;
-  background-color: #f8fafc; /* Cor de fundo geral */
+  background-color: var(--clr-surface); /* Cor de fundo geral */
 }
 
 .content {

@@ -1,5 +1,5 @@
 .statCard {
-  background-color: #ffffff;
+  background-color: var(--clr-canvas);
   border-radius: 8px;
   padding: 20px;
   display: flex;
@@ -19,22 +19,22 @@
 
 .icon {
   font-size: 24px;
-  color: #ffffff;
+  color: var(--clr-canvas);
 }
 
 .info .value {
   font-size: 28px;
   font-weight: 600;
-  color: #0F172A;
+  color: var(--clr-ink);
 }
 
 .info .label {
   font-size: 14px;
-  color: #64748B;
+  color: var(--clr-ink-muted);
 }
 
 .info .details {
     font-size: 12px;
-    color: #94A3B8;
+    color: var(--clr-ink-subtle);
     margin-top: 4px;
 }

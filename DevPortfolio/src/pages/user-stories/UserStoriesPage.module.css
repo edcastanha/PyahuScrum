@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--clr-surface);
   padding: 2rem;
 }
 
@@ -11,23 +11,23 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 2rem;
-  background-color: #ffffff;
+  background-color: var(--clr-canvas);
   border-radius: 0.5rem;
   padding: 1.25rem 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--clr-border);
 }
 
 .headerText h1 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--clr-ink);
   margin: 0 0 0.2rem;
 }
 
 .headerText p {
   font-size: 0.875rem;
-  color: #64748B;
+  color: var(--clr-ink-muted);
   margin: 0;
 }
 
@@ -36,8 +36,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #3B82F6;
-  color: #ffffff;
+  background-color: var(--clr-blue);
+  color: var(--clr-canvas);
   font-size: 0.875rem;
   font-weight: 600;
   padding: 0.625rem 1.125rem;
@@ -50,7 +50,7 @@
 }
 
 .addButton:hover {
-  background-color: #2563EB;
+  background-color: var(--clr-blue-deep);
 }
 
 @media (max-width: 640px) {

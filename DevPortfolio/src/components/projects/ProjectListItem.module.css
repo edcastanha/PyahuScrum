@@ -1,16 +1,16 @@
 .card {
-  background-color: #ffffff;
-  color: #0F172A;
+  background-color: var(--clr-canvas);
+  color: var(--clr-ink);
   border-radius: 0.5rem;
   padding: 1.25rem 1.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--clr-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 
 .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
-  border-color: #cbd5e1;
+  border-color: var(--clr-border-2);
 }
 
 .cardHeader {
@@ -24,7 +24,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #0F172A;
+  color: var(--clr-ink);
 }
 
 .headerActions {
@@ -39,9 +39,9 @@
 }
 
 .editButton {
-  background-color: #f8fafc;
-  color: #64748B;
-  border: 1px solid #e2e8f0;
+  background-color: var(--clr-surface);
+  color: var(--clr-ink-muted);
+  border: 1px solid var(--clr-border);
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
@@ -52,15 +52,15 @@
 }
 
 .editButton:hover {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #0F172A;
+  background-color: var(--clr-surface-2);
+  border-color: var(--clr-border-2);
+  color: var(--clr-ink);
 }
 
 .deleteButton {
-  background-color: #FFF1F2;
-  color: #BE123C;
-  border: 1px solid #FECDD3;
+  background-color: var(--clr-red-tint);
+  color: var(--clr-red-700);
+  border: 1px solid var(--clr-red-200);
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
@@ -86,25 +86,25 @@
 }
 
 .active {
-  background-color: #EFF6FF;
-  color: #1D4ED8;
-  border-color: #BFDBFE;
+  background-color: var(--clr-blue-tint);
+  color: var(--clr-blue-700);
+  border-color: var(--clr-blue-200);
 }
 
 .completed {
-  background-color: #F0FDF4;
-  color: #15803D;
-  border-color: #BBF7D0;
+  background-color: var(--clr-green-tint);
+  color: var(--clr-green-700);
+  border-color: var(--clr-green-200);
 }
 
 .inactive {
-  background-color: #F1F5F9;
-  color: #475569;
-  border-color: #CBD5E1;
+  background-color: var(--clr-surface-2);
+  color: var(--clr-ink-600);
+  border-color: var(--clr-border-2);
 }
 
 .progressBarContainer {
-  background-color: #e2e8f0;
+  background-color: var(--clr-border);
   border-radius: 9999px;
   height: 6px;
   margin-top: 0.875rem;
@@ -113,7 +113,7 @@
 }
 
 .progressBar {
-  background-color: #3B82F6;
+  background-color: var(--clr-blue);
   height: 100%;
   border-radius: 9999px;
   transition: transform 0.4s ease;

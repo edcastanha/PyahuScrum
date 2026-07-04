@@ -11,7 +11,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.5rem;
-  animation: slideInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: slideInRight 0.3s var(--ease-quint);
   z-index: 1000;
 }
 
@@ -46,27 +46,27 @@
 }
 
 .success {
-  background-color: #F0FDF4;
-  color: #15803D;
-  border-color: #BBF7D0;
+  background-color: var(--clr-green-tint);
+  color: var(--clr-green-700);
+  border-color: var(--clr-green-200);
 }
 
 .error {
-  background-color: #FFF1F2;
-  color: #BE123C;
-  border-color: #FECDD3;
+  background-color: var(--clr-red-tint);
+  color: var(--clr-red-700);
+  border-color: var(--clr-red-200);
 }
 
 .warning {
-  background-color: #FFFBEB;
-  color: #B45309;
-  border-color: #FDE68A;
+  background-color: var(--clr-amber-tint);
+  color: var(--clr-amber-700);
+  border-color: var(--clr-amber-200);
 }
 
 .info {
-  background-color: #EFF6FF;
-  color: #1D4ED8;
-  border-color: #BFDBFE;
+  background-color: var(--clr-blue-tint);
+  color: var(--clr-blue-700);
+  border-color: var(--clr-blue-200);
 }
 
 @keyframes slideInRight {
