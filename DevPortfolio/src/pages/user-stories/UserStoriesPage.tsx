@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { DropResult } from 'react-beautiful-dnd';
 import KanbanBoard from '../../components/user-stories/KanbanBoard';
@@ -39,7 +39,7 @@ const UserStoriesPage: React.FC = () => {
     );
   }, [projectId]);
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = useCallback((result: DropResult) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
@@ -55,36 +55,39 @@ const UserStoriesPage: React.FC = () => {
     } else {
       showToast('error', 'Não foi possível mover a história. Tente novamente.');
     }
-  };
+  }, [showToast]);
 
-  const handleOpenForm = (story?: UserStory) => {
+  const handleOpenForm = useCallback((story?: UserStory) => {
     setEditingStory(story);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setIsFormOpen(false);
     setEditingStory(undefined);
-  };
+  }, []);
 
-  const handleSaveStory = (storyData: UserStory) => {
+  const handleSaveStory = useCallback((storyData: UserStory) => {
     const storyToSave: UserStory = {
       ...storyData,
       projectId: storyData.projectId.toString(),
     };
     const savedStory = userStoryService.saveUserStory(storyToSave);
 
-    if (editingStory) {
-      setStories(prev => prev.map(s => (s.id === savedStory.id ? savedStory : s)));
-      showToast('success', 'História atualizada com sucesso!');
-    } else {
+    setStories(prev => {
+      if (prev.some(s => s.id === savedStory.id)) {
+        showToast('success', 'História atualizada com sucesso!');
+        return prev.map(s => (s.id === savedStory.id ? savedStory : s));
+      }
       if (!projectId || savedStory.projectId === projectId) {
-        setStories(prev => [...prev, savedStory]);
+        showToast('success', 'História criada com sucesso!');
+        return [...prev, savedStory];
       }
       showToast('success', 'História criada com sucesso!');
-    }
+      return prev;
+    });
     handleCloseForm();
-  };
+  }, [projectId, showToast, handleCloseForm]);
 
   return (
     <div className={styles.container}>

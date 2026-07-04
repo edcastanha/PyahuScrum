@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { UserStory } from '../../entities/UserStory';
 import styles from './UserStoryCard.module.css';
@@ -41,15 +41,15 @@ const DragIcon: React.FC = () => (
   </svg>
 );
 
-const UserStoryCard: React.FC<UserStoryCardProps> = ({ story, index, onEdit }) => {
+const UserStoryCard = React.memo<UserStoryCardProps>(({ story, index, onEdit }) => {
   const priority = priorityConfig[story.priority];
   const status = statusConfig[story.status];
 
-  const handleEdit = (e: React.MouseEvent) => {
+  const handleEdit = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onEdit(story);
-  };
+  }, [story, onEdit]);
 
   return (
     <Draggable draggableId={story.id.toString()} index={index}>
@@ -125,6 +125,6 @@ const UserStoryCard: React.FC<UserStoryCardProps> = ({ story, index, onEdit }) =
       )}
     </Draggable>
   );
-};
+});
 
 export default UserStoryCard;

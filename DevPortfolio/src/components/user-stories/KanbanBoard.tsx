@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { UserStory } from '../../entities/UserStory';
 import UserStoryCard from './UserStoryCard';
@@ -45,12 +45,12 @@ const EmptyState: React.FC<{ boardIsEmpty: boolean }> = ({ boardIsEmpty }) => (
   </div>
 );
 
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ stories, onDragEnd, onEditStory }) => {
-  const grouped: Record<ColumnId, UserStory[]> = {
+const KanbanBoard = React.memo<KanbanBoardProps>(({ stories, onDragEnd, onEditStory }) => {
+  const grouped = useMemo<Record<ColumnId, UserStory[]>>(() => ({
     todo:       stories.filter(s => s.status === 'todo'),
     inprogress: stories.filter(s => s.status === 'inprogress'),
     done:       stories.filter(s => s.status === 'done'),
-  };
+  }), [stories]);
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -111,6 +111,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ stories, onDragEnd, onEditSto
       </div>
     </DragDropContext>
   );
-};
+});
 
 export default KanbanBoard;
