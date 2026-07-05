@@ -62,4 +62,4 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities }) => {
   );
 };
 
-export default ActivityFeed;
+export default React.memo(ActivityFeed);

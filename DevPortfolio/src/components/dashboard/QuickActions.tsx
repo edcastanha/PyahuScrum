@@ -78,4 +78,4 @@ const QuickActions: React.FC = () => {
   );
 };
 
-export default QuickActions;
+export default React.memo(QuickActions);

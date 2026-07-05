@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useCallback, useMemo, ReactNode } from 'react';
 import Toast from '../components/common/Toast';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -30,20 +30,22 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = (type: ToastType, message: string) => {
+  const showToast = useCallback((type: ToastType, message: string) => {
     const id = Date.now().toString();
-    setToasts((prevToasts) => [...prevToasts, { id, type, message }]);
-  };
+    setToasts(prev => [...prev, { id, type, message }]);
+  }, []);
 
-  const removeToast = (id: string) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-  };
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const ctxValue = useMemo(() => ({ showToast }), [showToast]);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={ctxValue}>
       {children}
       <div className="toast-container">
-        {toasts.map((toast) => (
+        {toasts.map(toast => (
           <Toast
             key={toast.id}
             type={toast.type}

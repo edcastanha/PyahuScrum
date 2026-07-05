@@ -19,4 +19,4 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, details, iconBg
   );
 };
 
-export default StatCard;
+export default React.memo(StatCard);

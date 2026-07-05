@@ -54,4 +54,4 @@ const TechDistribution: React.FC = () => {
   );
 };
 
-export default TechDistribution;
+export default React.memo(TechDistribution);
