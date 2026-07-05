@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Activity } from '../../entities/Activity';
 import { Project } from '../../entities/Project';
 import { projectService } from '../../services/project/projectService';
@@ -23,50 +23,37 @@ const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { showToast } = useToast();
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setIsLoading(true);
-
-    // Carregar projetos
     const loadedProjects = projectService.getProjects();
-    setProjects(loadedProjects);
-
-    // Carregar atividades
     const loadedActivities = activityService.getActivities();
-    setActivities(loadedActivities);
-
-    // Carregar estatísticas
     const projectStats = projectService.getProjectStats();
     const activityStats = activityService.getActivityStats();
-    
+    setProjects(loadedProjects);
+    setActivities(loadedActivities);
     setStats({
       totalProjects: projectStats.total,
       completedProjects: projectStats.completed,
       activeStories: activityStats.activeStories,
     });
-
     setIsLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-    
-    // Adicionar listener para atualização de projetos
-    const handleProjectsUpdated = () => {
-      loadData();
-    };
-    
-    window.addEventListener('projectsUpdated', handleProjectsUpdated);
-    
-    // Limpeza ao desmontar
-    return () => {
-      window.removeEventListener('projectsUpdated', handleProjectsUpdated);
-    };
-  }, []);
+    window.addEventListener('projectsUpdated', loadData);
+    return () => window.removeEventListener('projectsUpdated', loadData);
+  }, [loadData]);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     loadData();
     showToast('info', 'Dashboard atualizado com sucesso!');
-  };
+  }, [loadData, showToast]);
+
+  const activeProjects = useMemo(
+    () => projects.filter(p => p.status === 'active'),
+    [projects]
+  );
 
   return (
     <div className={styles.dashboardPage}>
@@ -111,11 +98,9 @@ const DashboardPage: React.FC = () => {
               <div className={styles.projectsSection}>
                 <h2>Projetos em Andamento</h2>
                 <div className={styles.projectsList}>
-                  {projects
-                    .filter(project => project.status === 'active')
-                    .map(project => (
-                      <ProjectProgressCard key={project.id} project={project} />
-                    ))}
+                  {activeProjects.map(project => (
+                    <ProjectProgressCard key={project.id} project={project} />
+                  ))}
                 </div>
               </div>
               

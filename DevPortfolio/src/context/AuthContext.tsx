@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authStorage, AuthSession, GitHubProfile } from '../services/auth/authStorage';
 import { fetchGithubUserProfile } from '../services/auth/githubAuthService';
 import { mapAuthError } from '../services/auth/authError';
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setProfile(session.profile ?? null);
   }, []);
 
-  const loginWithGithub = async (username: string) => {
+  const loginWithGithub = useCallback(async (username: string) => {
     setIsLoggingIn(true);
     setErrorMessage(null);
 
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoggingIn(false);
     }
-  };
+  }, [persistSession]);
 
   const refreshProfile = useCallback(async () => {
     if (!isAuthenticated || !githubLogin) {
@@ -100,31 +100,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [githubLogin, isAuthenticated, persistSession]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     authStorage.clearSession();
     setIsAuthenticated(false);
     setGithubLogin(null);
     setProfile(null);
     setErrorMessage(null);
-  };
+  }, []);
 
-  const clearError = () => setErrorMessage(null);
+  const clearError = useCallback(() => setErrorMessage(null), []);
+
+  const ctxValue = useMemo(() => ({
+    isAuthenticated,
+    isHydrated,
+    githubLogin,
+    profile,
+    errorMessage,
+    isLoggingIn,
+    loginWithGithub,
+    refreshProfile,
+    logout,
+    clearError,
+  }), [isAuthenticated, isHydrated, githubLogin, profile, errorMessage, isLoggingIn,
+      loginWithGithub, refreshProfile, logout, clearError]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        isHydrated,
-        githubLogin,
-        profile,
-        errorMessage,
-        isLoggingIn,
-        loginWithGithub,
-        refreshProfile,
-        logout,
-        clearError
-      }}
-    >
+    <AuthContext.Provider value={ctxValue}>
       {children}
     </AuthContext.Provider>
   );

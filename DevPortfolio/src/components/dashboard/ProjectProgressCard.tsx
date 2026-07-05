@@ -27,4 +27,4 @@ const ProjectProgressCard: React.FC<ProjectProgressCardProps> = ({ project }) =>
   );
 };
 
-export default ProjectProgressCard;
+export default React.memo(ProjectProgressCard);
