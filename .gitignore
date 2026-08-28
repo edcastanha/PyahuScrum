@@ -1,6 +1,9 @@
 #Git Ignore para projetos REACTJS com TypeScript
 # Dependências do Node.js
 node_modules/
+
+# Worktrees locais (git worktree add)
+.worktrees/
 # Diretórios de build
 build/
 dist/
