@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response, status
+from pydantic import BaseModel
 
-from . import firestore_client, messaging
+from . import firestore_client, messaging, projects
 
 
 @asynccontextmanager
@@ -30,3 +31,12 @@ def health(response: Response) -> dict:
         "rabbitmq": rabbitmq_ok,
         "firestore": firestore_ok,
     }
+
+
+class ProjectCreateRequest(BaseModel):
+    idea: str
+
+
+@app.post("/projects", status_code=status.HTTP_201_CREATED)
+def create_project(payload: ProjectCreateRequest) -> dict:
+    return projects.create_project(payload.idea)
