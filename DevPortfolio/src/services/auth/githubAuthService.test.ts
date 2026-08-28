@@ -6,7 +6,7 @@ describe('fetchGithubUserProfile', () => {
   });
 
   it('fetches a github profile', async () => {
-    const fetchMock = jest.spyOn(global, 'fetch' as never).mockResolvedValue({
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({
@@ -29,7 +29,7 @@ describe('fetchGithubUserProfile', () => {
   });
 
   it('throws a 404 error for unknown user', async () => {
-    jest.spyOn(global, 'fetch' as never).mockResolvedValue({
+    jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: false,
       status: 404
     } as Response);
