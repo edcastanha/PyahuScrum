@@ -4,10 +4,10 @@
 
 **Blocked by:** 01 (Infra local pronta)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Existe um endpoint HTTP que aceita a ideia bruta (texto) e responde imediatamente, sem esperar o processamento
-- [ ] Ao receber o pedido, um documento é criado no Firestore emulado com status `TRIAGEM_INICIAL`
-- [ ] Uma mensagem correspondente ao pedido é publicada na fila RabbitMQ
-- [ ] Um teste de integração cobre o cenário: `POST` no endpoint → documento com `TRIAGEM_INICIAL` no Firestore emulado → mensagem presente na fila
-- [ ] Nenhuma chamada ao Vertex AI acontece nesta etapa
+- [x] Existe um endpoint HTTP que aceita a ideia bruta (texto) e responde imediatamente, sem esperar o processamento
+- [x] Ao receber o pedido, um documento é criado no Firestore emulado com status `TRIAGEM_INICIAL`
+- [x] Uma mensagem correspondente ao pedido é publicada na fila RabbitMQ
+- [x] Um teste de integração cobre o cenário: `POST` no endpoint → documento com `TRIAGEM_INICIAL` no Firestore emulado → mensagem presente na fila
+- [x] Nenhuma chamada ao Vertex AI acontece nesta etapa
