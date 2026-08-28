@@ -10,6 +10,20 @@ class GeneratedArtifacts:
     tickets: list[str] = field(default_factory=list)
 
 
+class QuotaExceededError(Exception):
+    """Quota/crédito do Vertex AI excedido. Não adianta tentar de novo sozinho --
+    exige intervenção humana (ver FailureReason.QUOTA_EXCEDIDA)."""
+
+
+class TransientServiceError(Exception):
+    """Erro transitório de rede/serviço do Vertex AI. Vale tentar de novo."""
+
+
+class InvalidResponseError(Exception):
+    """O modelo respondeu, mas fora do formato esperado (JSON malformado,
+    campos faltando). Vale tentar de novo -- pode ser um lapso pontual do modelo."""
+
+
 _PROMPT = """Você é um agente de engenharia autônomo do Pyahu Scrum, seguindo as diretrizes \
 de .agents/system-prompt.md: specs com Problem Statement/Solution/User Stories/Implementation \
 Decisions/Testing Decisions, tickets em vertical slices com critérios de aceite testáveis.
@@ -38,18 +52,33 @@ class VertexAIClient:
         # Import local: só os testes com fake exercitam este método; evita exigir
         # credencial/config do SDK real em import-time.
         from google import genai
+        from google.genai import errors as genai_errors
 
-        client = genai.Client()
-        response = client.models.generate_content(
-            model=self._model,
-            contents=_PROMPT.format(idea=idea),
-        )
-        data = json.loads(response.text)
-        return GeneratedArtifacts(
-            readme=data["readme"],
-            adrs=data.get("adrs", []),
-            tickets=data.get("tickets", []),
-        )
+        try:
+            client = genai.Client()
+            response = client.models.generate_content(
+                model=self._model,
+                contents=_PROMPT.format(idea=idea),
+            )
+        except genai_errors.ClientError as exc:
+            # Mapeamento best-effort: nao verificado contra credencial real
+            # (ticket 02 pendente no momento desta escrita). 429 = quota/rate
+            # limit; qualquer outro erro do cliente tratado como transitorio.
+            if getattr(exc, "code", None) == 429:
+                raise QuotaExceededError(str(exc)) from exc
+            raise TransientServiceError(str(exc)) from exc
+        except Exception as exc:
+            raise TransientServiceError(str(exc)) from exc
+
+        try:
+            data = json.loads(response.text)
+            return GeneratedArtifacts(
+                readme=data["readme"],
+                adrs=data.get("adrs", []),
+                tickets=data.get("tickets", []),
+            )
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise InvalidResponseError(str(exc)) from exc
 
 
 _client: VertexAIClient | None = None
