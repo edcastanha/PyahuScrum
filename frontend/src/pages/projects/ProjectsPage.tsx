@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProjectList from '../../components/projects/ProjectList';
 import styles from './ProjectsPage.module.css';
 import ProjectForm from '../../components/projects/ProjectForm';
+import PipelineStatusModal from '../../components/projects/PipelineStatusModal';
 import { Project } from '../../entities/Project';
 import { projectService } from '../../services/project/projectService';
 import { activityService } from '../../services/activity/activityService';
@@ -12,6 +13,7 @@ const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [pipelineProjectId, setPipelineProjectId] = useState<string | null>(null);
   const { showToast } = useToast();
 
   // Carregar projetos do serviço
@@ -70,7 +72,8 @@ const ProjectsPage: React.FC = () => {
         // Aciona o Agent Orchestrator em paralelo (não bloqueia nem desfaz a
         // criação local se falhar -- só avisa o usuário)
         try {
-          await createPipelineRequest(deriveIdeaFromProject(savedProject));
+          const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject));
+          setPipelineProjectId(pipelineRequest.id);
         } catch (pipelineError) {
           console.error('Erro ao acionar o Agent Orchestrator:', pipelineError);
           showToast('error', 'Projeto salvo, mas não foi possível acionar a geração automática de artefatos.');
@@ -143,10 +146,16 @@ const ProjectsPage: React.FC = () => {
         onDelete={handleDeleteProject}
       />
       {isFormOpen && (
-        <ProjectForm 
+        <ProjectForm
           project={selectedProject}
-          onSave={handleSaveProject} 
-          onCancel={handleCancel} 
+          onSave={handleSaveProject}
+          onCancel={handleCancel}
+        />
+      )}
+      {pipelineProjectId && (
+        <PipelineStatusModal
+          projectId={pipelineProjectId}
+          onClose={() => setPipelineProjectId(null)}
         />
       )}
     </div>
