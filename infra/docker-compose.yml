@@ -48,7 +48,10 @@ services:
         condition: service_healthy
       firestore-emulator:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # START_CONSUMER fica só aqui, não em `environment:` -- `docker compose run
+    # backend pytest` herda `environment:` mas troca este `command:` pelo dele,
+    # então os testes nunca sobem o consumidor de fundo e competem por mensagens.
+    command: sh -c "START_CONSUMER=true uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
