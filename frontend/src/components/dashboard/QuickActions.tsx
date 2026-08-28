@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Settings, FileCode, BarChart } from 'lucide-react';
+import { Plus, Settings, BarChart } from 'lucide-react';
 import styles from './QuickActions.module.css';
 
 interface QuickAction {
@@ -23,14 +23,6 @@ const QuickActions: React.FC = () => {
       icon: Plus,
       iconBgColor: '#3B82F6',
       onClick: () => navigate('/projects'),
-    },
-    {
-      id: 'new-story',
-      title: 'Nova História',
-      description: 'Adicionar história de usuário',
-      icon: FileCode,
-      iconBgColor: '#F59E0B',
-      onClick: () => navigate('/user-stories'),
     },
     {
       id: 'project-status',
