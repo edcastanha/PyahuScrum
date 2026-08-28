@@ -1,14 +1,16 @@
+name: pyahu-scrum-dev
+
 services:
   frontend:
     build:
       context: ..
       dockerfile: infra/Dockerfile
       target: dev
-    container_name: devportfolio-frontend
+    container_name: pyahu-scrum-frontend
     ports:
       - "5000:3000"
     volumes:
-      - ../DevPortfolio/:/app
+      - ../frontend/:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -21,22 +23,55 @@ services:
       context: ..
       dockerfile: infra/Dockerfile
       target: build
-    container_name: devportfolio-frontend-build
+    container_name: pyahu-scrum-frontend-build
     volumes:
-      - ../DevPortfolio/build:/app/build
+      - ../frontend/build:/app/build
     environment:
       - NODE_ENV=production
     command: npm run build
 
-  mongodb:
-    image: mongo:7
-    container_name: devportfolio-mongodb
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: pyahu-scrum-backend
     ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=devportfolio
+      - "8001:8000"
     volumes:
-      - mongo_data:/data/db
+      - ../backend/:/app
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - FIRESTORE_EMULATOR_HOST=firestore-emulator:8080
+      - GOOGLE_CLOUD_PROJECT=pyahu-scrum-local
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      firestore-emulator:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-volumes:
-  mongo_data:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: pyahu-scrum-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  firestore-emulator:
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
+    container_name: pyahu-scrum-firestore-emulator
+    ports:
+      - "8080:8080"
+    command: >
+      gcloud emulators firestore start
+      --host-port=0.0.0.0:8080
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
