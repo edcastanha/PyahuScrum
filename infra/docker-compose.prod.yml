@@ -1,0 +1,26 @@
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: prod
+    container_name: pyahuscrum-frontend
+    networks:
+      - easypanel
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pyahuscrum.rule=Host(`pyahuscrum.adbfn6.easypanel.host`)
+      - traefik.http.routers.pyahuscrum.entrypoints=https
+      - traefik.http.routers.pyahuscrum.tls.certresolver=letsencrypt
+      - traefik.docker.network=easypanel
+      - traefik.http.services.pyahuscrum.loadbalancer.server.port=80
+    restart: unless-stopped
+
+networks:
+  easypanel:
+    external: true
