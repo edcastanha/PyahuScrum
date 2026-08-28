@@ -3,15 +3,13 @@ import { NavLink, useLocation } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 import { useAuth } from '../../context/AuthContext';
 import { buildSidebarProfileSummary } from '../../services/auth/profileSummary';
-import { 
-  Gauge, 
-  FolderKanban, 
-  Clock, 
-  FileText, 
-  Github, 
-  Code2, 
-  Menu, 
-  X 
+import {
+  Gauge,
+  FolderKanban,
+  Github,
+  Code2,
+  Menu,
+  X
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -71,12 +69,6 @@ const Sidebar: React.FC = () => {
         </NavLink>
         <NavLink to="/projects" className={({ isActive }) => isActive ? styles.active : ''}>
           <FolderKanban /> Gerenciar projetos
-        </NavLink>
-        <NavLink to="/user-stories" className={({ isActive }) => isActive ? styles.active : ''}>
-          <Clock /> User Stories e backlog
-        </NavLink>
-        <NavLink to="/documentation" className={({ isActive }) => isActive ? styles.active : ''}>
-          <FileText /> README e ADRs
         </NavLink>
       </nav>
       <div className={styles.quickLinks}>
