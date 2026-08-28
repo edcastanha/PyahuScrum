@@ -2,6 +2,12 @@
 # Dependências do Node.js
 node_modules/
 
+# Python (backend/)
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
 # Worktrees locais (git worktree add)
 .worktrees/
 # Diretórios de build

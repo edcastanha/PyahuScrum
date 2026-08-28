@@ -4,10 +4,10 @@ FROM node:22-slim AS base
 WORKDIR /app
 
 # COPY é relativo ao build context (repo root em docker-compose)
-COPY DevPortfolio/package*.json ./
+COPY frontend/package*.json ./
 RUN npm install
 
-COPY DevPortfolio/ ./
+COPY frontend/ ./
 
 FROM base AS dev
 EXPOSE 3000
