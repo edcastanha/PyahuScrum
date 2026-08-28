@@ -33,9 +33,11 @@ Valores do campo de status de um projeto no Firestore, atualizados a cada etapa 
 **AGUARDANDO_APROVACAO_ESCOPO**: A execução foi suspensa porque a Hierarquia de Bloqueio detectou uma mudança de escopo arriscada ou ambígua; aguarda decisão humana.
 _Avoid_: Pausado, bloqueado
 
-**FALHA_PROCESSAMENTO**: Uma tentativa de processamento falhou (timeout de API, JSON corrompido, queda do container), mas ainda dentro do limite de retentativas do Pub/Sub.
+**FALHA_PROCESSAMENTO**: Uma tentativa de processamento falhou (timeout de API, JSON corrompido, queda do container), mas ainda dentro do limite de retentativas.
 
-**FALHA_DLQ**: As retentativas se esgotaram e a mensagem foi roteada para a Dead Letter Queue; requer reenfileiramento manual pelo painel.
+**FALHA_DLQ**: As retentativas se esgotaram (ou a falha não é recuperável, ver `QUOTA_EXCEDIDA`) e a mensagem foi roteada para a Dead Letter Queue. Pedidos com motivo recuperável são reenfileirados automaticamente por um gatilho agendado (ver ticket 08); não há reenfileiramento manual pelo Portfólio Interativo — essa responsabilidade é só do backend.
+
+**failure_reason**: Campo do documento que classifica por que um processamento falhou, gravado junto com `FALHA_PROCESSAMENTO`/`FALHA_DLQ`. Três valores: `QUOTA_EXCEDIDA` (falta de crédito/rate-limit do Gemini — nunca reenfileirado automaticamente, exige intervenção humana), `ERRO_TRANSITORIO` (rede/serviço instável — recuperável), `RESPOSTA_INVALIDA` (o modelo devolveu algo fora do formato esperado — recuperável).
 
 ### Resiliência e Governança
 
