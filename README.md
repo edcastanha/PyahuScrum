@@ -8,7 +8,7 @@ Este projeto democratiza a engenharia de decisão: ele captura ideias brutas de 
 
 O projeto está dividido em duas camadas principais para garantir desacoplamento e escalabilidade:
 
-*   **/frontend** (`PortifolioInterativo`): Interface de usuário e gestão visual.
+*   **/frontend** (`DevPortfolio`): Interface de usuário e gestão visual.
 *   **/backend** (`Agent Orchestrator`): Motor assíncrono em Python responsável pelas integrações com Google Cloud e GenAI SDK.
 *   **/.agents**: Diretório de *skills* e diretrizes de comportamento do agente (baseado em melhores práticas de engenharia).
 
@@ -51,3 +51,66 @@ C4Container
     UpdateRelStyle(worker, pubsub, $offsetX="-70", $offsetY="0")
     UpdateRelStyle(pubsub, worker, $offsetX="10", $offsetY="5")
     UpdateRelStyle(worker, vertex, $offsetX="10", $offsetY="15")
+
+```
+
+### Motor de Recuperação de Histórico (RAG)
+
+Para garantir que as novas ADRs e tickets respeitem o histórico do projeto e regras de negócio prévias, o backend utiliza o **Vertex AI Text Embeddings** em conjunto com o **Firestore Vector Search**.
+
+A similaridade entre a nova requisição $q$ e os documentos históricos $d$ é calculada nativamente via aproximação de cosseno:
+
+$$\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}=\frac{\sum_{i=1}^{n}q_id_i}{\sqrt{\sum_{i=1}^{n}q_i^2}\sqrt{\sum_{i=1}^{n}d_i^2}}$$
+
+## 🛠️ Tecnologias Utilizadas
+
+**Inteligência & Core**
+
+* Google GenAI SDK (Python)
+* Vertex AI (Gemini 3.5 Flash & Embeddings)
+
+**Infraestrutura & Backend (Google Cloud)**
+
+* Cloud Run (Serverless Worker)
+* Cloud Pub/Sub (Eventos e Dead Letter Queue)
+* Firestore (Banco de Dados de Documentos e Vetorial)
+* Docker & GitHub Actions (CI/CD)
+
+**Frontend**
+
+* React / TypeScript (Portfólio Interativo)
+
+## 🚀 Como Executar Localmente
+
+**1. Clone o repositório**
+
+```bash
+git clone [https://github.com/edcastanha/PyauScrum.git](https://github.com/edcastanha/PyauScrum.git)
+cd PyauScrum
+
+```
+
+**2. Configuração do Backend (Worker)**
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # ou venv\Scripts\activate no Windows
+pip install -r requirements.txt
+# Configure suas credenciais do GCP no arquivo .env
+python main.py
+
+```
+
+**3. Configuração do Frontend**
+
+```bash
+cd ../frontend
+npm install
+npm run dev
+
+```
+
+## 🛡️ Governança e Human-in-the-Loop
+
+O Pyahu Scrum implementa uma política estrita de resiliência. Mudanças de escopo sensíveis detectadas pelo agente pausam a execução e alteram o status no Firestore para `AGUARDANDO_APROVACAO_ESCOPO`. O processamento só é retomado (via Pub/Sub) após a aprovação explícita do usuário no front-end.
