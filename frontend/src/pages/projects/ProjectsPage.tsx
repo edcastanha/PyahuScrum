@@ -5,6 +5,7 @@ import ProjectForm from '../../components/projects/ProjectForm';
 import { Project } from '../../entities/Project';
 import { projectService } from '../../services/project/projectService';
 import { activityService } from '../../services/activity/activityService';
+import { createPipelineRequest, deriveIdeaFromProject } from '../../services/pipeline/pipelineService';
 import { useToast } from '../../context/ToastContext';
 
 const ProjectsPage: React.FC = () => {
@@ -28,7 +29,7 @@ const ProjectsPage: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleSaveProject = (project: Project) => {
+  const handleSaveProject = async (project: Project) => {
     try {
       // Salva o projeto usando o serviço
       const savedProject = projectService.saveProject(project);
@@ -65,6 +66,15 @@ const ProjectsPage: React.FC = () => {
         
         // Mostra toast de sucesso
         showToast('success', `Projeto "${savedProject.name}" criado com sucesso!`);
+
+        // Aciona o Agent Orchestrator em paralelo (não bloqueia nem desfaz a
+        // criação local se falhar -- só avisa o usuário)
+        try {
+          await createPipelineRequest(deriveIdeaFromProject(savedProject));
+        } catch (pipelineError) {
+          console.error('Erro ao acionar o Agent Orchestrator:', pipelineError);
+          showToast('error', 'Projeto salvo, mas não foi possível acionar a geração automática de artefatos.');
+        }
       }
       
       // Emite um evento customizado para notificar outros componentes

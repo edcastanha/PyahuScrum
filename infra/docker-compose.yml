@@ -15,6 +15,9 @@ services:
     environment:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      # Alcançável a partir do navegador (fora da rede docker), por isso usa a
+      # porta mapeada no host (8001), não o hostname interno do serviço backend.
+      - REACT_APP_AGENT_ORCHESTRATOR_URL=http://localhost:8001
     command: npm start
 
   frontend-build:
