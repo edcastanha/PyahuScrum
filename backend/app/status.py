@@ -1,0 +1,13 @@
+from enum import Enum
+
+
+class ProjectStatus(str, Enum):
+    """Valores do campo de status de um projeto no Firestore. Ver CONTEXT.md."""
+
+    TRIAGEM_INICIAL = "TRIAGEM_INICIAL"
+    TRIAGEM_EM_ANDAMENTO = "TRIAGEM_EM_ANDAMENTO"
+    GERANDO_ADR = "GERANDO_ADR"
+    CONCLUIDO = "CONCLUIDO"
+    AGUARDANDO_APROVACAO_ESCOPO = "AGUARDANDO_APROVACAO_ESCOPO"
+    FALHA_PROCESSAMENTO = "FALHA_PROCESSAMENTO"
+    FALHA_DLQ = "FALHA_DLQ"

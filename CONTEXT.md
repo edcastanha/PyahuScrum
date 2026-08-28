@@ -28,6 +28,8 @@ Valores do campo de status de um projeto no Firestore, atualizados a cada etapa 
 
 **GERANDO_ADR**: Etapa específica de geração de Architecture Decision Records dentro do pipeline.
 
+**CONCLUIDO**: O pipeline terminou com sucesso; os artefatos (README, ADR(s), tickets) estão gravados no documento e disponíveis para o Portfólio Interativo exibir.
+
 **AGUARDANDO_APROVACAO_ESCOPO**: A execução foi suspensa porque a Hierarquia de Bloqueio detectou uma mudança de escopo arriscada ou ambígua; aguarda decisão humana.
 _Avoid_: Pausado, bloqueado
 
