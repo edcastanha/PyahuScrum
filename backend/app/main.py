@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Response, status
 from pydantic import BaseModel
 
-from . import consumer, firestore_client, messaging, projects
+from . import consumer, dlq_sweeper, firestore_client, messaging, projects
 
 
 @asynccontextmanager
@@ -17,9 +17,10 @@ async def lifespan(app: FastAPI):
         connection.close()
 
     if os.environ.get("START_CONSUMER", "false").lower() == "true":
-        # Thread daemon: morre com o processo, sem shutdown gracioso. Aceitável
+        # Threads daemon: morrem com o processo, sem shutdown gracioso. Aceitável
         # pro escopo atual (MVP); revisitar se isso virar um problema real.
         threading.Thread(target=consumer.start_consuming, daemon=True).start()
+        threading.Thread(target=dlq_sweeper.start_sweeping, daemon=True).start()
 
     yield
 
