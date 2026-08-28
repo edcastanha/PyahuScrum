@@ -1,3 +1,4 @@
+import json
 import os
 
 import pika
@@ -34,6 +35,20 @@ def declare_topology(channel: BlockingChannel) -> None:
         },
     )
     channel.queue_bind(queue=QUEUE_NAME, exchange=EXCHANGE_NAME, routing_key=ROUTING_KEY)
+
+
+def publish_to_pipeline(body: dict) -> None:
+    connection = get_connection()
+    try:
+        channel = connection.channel()
+        channel.basic_publish(
+            exchange=EXCHANGE_NAME,
+            routing_key=ROUTING_KEY,
+            body=json.dumps(body),
+            properties=pika.BasicProperties(delivery_mode=2, content_type="application/json"),
+        )
+    finally:
+        connection.close()
 
 
 def check_connection() -> bool:
