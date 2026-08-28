@@ -64,7 +64,7 @@ C4Container
 **Negativas / Riscos**
 
 - Aumento significativo de complexidade operacional: passa a existir um worker Python, filas, DLQ e um banco vetorial onde antes havia apenas um front-end estático.
-- **Esta arquitetura ainda não está implementada no código do repositório.** `DevPortfolio/` continua sendo um CRA + TypeScript com MongoDB via `infra/docker-compose.yml`; não existe worker Python, integração com Pub/Sub, Firestore ou Vertex AI no código atual. Este ADR registra a decisão e o desenho alvo — a implementação é trabalho subsequente.
+- **Esta arquitetura ainda não está implementada no código do repositório.** `frontend/` continua sendo um CRA + TypeScript com MongoDB via `infra/docker-compose.yml` (que ainda referencia o caminho antigo `DevPortfolio/`, desatualizado após o rename); `backend/` existe apenas como diretório vazio. Não há worker Python, integração com Pub/Sub, Firestore ou Vertex AI no código atual. Este ADR registra a decisão e o desenho alvo — a implementação é trabalho subsequente.
 
 **Mitigação**
 
