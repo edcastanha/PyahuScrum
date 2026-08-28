@@ -3,7 +3,11 @@ import { render, screen } from '@testing-library/react';
 import ProtectedRoute from './ProtectedRoute';
 
 var mockNavigate = jest.fn();
-var mockAuthState = { isAuthenticated: false, isHydrated: true, githubLogin: null };
+var mockAuthState: { isAuthenticated: boolean; isHydrated: boolean; githubLogin: string | null } = {
+  isAuthenticated: false,
+  isHydrated: true,
+  githubLogin: null
+};
 
 jest.mock('react-router-dom', () => ({
   __esModule: true,
