@@ -1,3 +1,5 @@
+name: pyahu-scrum-prod
+
 services:
   frontend:
     build:
