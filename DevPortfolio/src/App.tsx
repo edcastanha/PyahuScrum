@@ -53,6 +53,16 @@ function App() {
                 }
               />
               <Route
+                path="/user-stories/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <UserStoriesPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/documentation"
                 element={
                   <ProtectedRoute>
