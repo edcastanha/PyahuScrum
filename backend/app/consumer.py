@@ -74,6 +74,46 @@ def handle_nova_elicitacao(project_id: str, idea: str, ai_client=None) -> bool:
     return False
 
 
+def handle_aprovar(project_id: str, ai_client=None) -> bool:
+    """Usuário aprovou o escopo → gerar artefatos."""
+    if not _project_exists(project_id):
+        logger.info("Projeto %s não existe — aprovação descartada.", project_id)
+        return True
+    service = ElicitacaoService(ai_client=ai_client)
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            service.aprovar_escopo(project_id=project_id)
+            return True
+        except Exception as exc:
+            reason = _classify(exc)
+            exhausted = reason == FailureReason.QUOTA_EXCEDIDA or attempt >= MAX_ATTEMPTS
+            logger.warning("handle_aprovar: tentativa %d/%d falhou (%s): %s", attempt, MAX_ATTEMPTS, reason.value, exc)
+            if exhausted:
+                _record_failure(project_id, ProjectStatus.FALHA_PROCESSAMENTO, reason, attempt)
+                return False
+    return False
+
+
+def handle_revisao(project_id: str, feedback: str, ai_client=None) -> bool:
+    """Usuário enviou feedback de revisão → Gemini reanalisa."""
+    if not _project_exists(project_id):
+        logger.info("Projeto %s não existe — revisão descartada.", project_id)
+        return True
+    service = ElicitacaoService(ai_client=ai_client)
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            service.revisar_escopo(project_id=project_id, feedback=feedback)
+            return True
+        except Exception as exc:
+            reason = _classify(exc)
+            exhausted = reason == FailureReason.QUOTA_EXCEDIDA or attempt >= MAX_ATTEMPTS
+            logger.warning("handle_revisao: tentativa %d/%d falhou (%s): %s", attempt, MAX_ATTEMPTS, reason.value, exc)
+            if exhausted:
+                _record_failure(project_id, ProjectStatus.FALHA_PROCESSAMENTO, reason, attempt)
+                return False
+    return False
+
+
 # ── Handler: respostas de rodadas ──────────────────────────────────────────────
 
 
@@ -143,12 +183,18 @@ def _make_callback(queue_name: str):
             idea = message.get("idea", "")
             ok = handle_nova_elicitacao(project_id=project_id, idea=idea)
         elif queue_name == messaging.QUEUE_ELICITACAO:
-            ok = handle_resposta(
-                project_id=project_id,
-                numero_rodada=message.get("rodada", 1),
-                respostas=message.get("respostas", []),
-                forcar_geracao=message.get("forcar_geracao", False),
-            )
+            tipo = message.get("tipo", "resposta")
+            if tipo == "aprovar":
+                ok = handle_aprovar(project_id=project_id)
+            elif tipo == "revisao":
+                ok = handle_revisao(project_id=project_id, feedback=message.get("feedback", ""))
+            else:
+                ok = handle_resposta(
+                    project_id=project_id,
+                    numero_rodada=message.get("rodada", 1),
+                    respostas=message.get("respostas", []),
+                    forcar_geracao=message.get("forcar_geracao", False),
+                )
         else:
             logger.error("Fila desconhecida: %s", queue_name)
             ok = True  # ack e ignora

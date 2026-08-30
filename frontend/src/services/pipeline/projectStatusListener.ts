@@ -26,6 +26,7 @@ export interface PipelineStatusUpdate {
   }>;
   rodada_atual?: number;
   pronto?: boolean;
+  resumo_escopo?: string;       // gerado pelo Gemini em AGUARDANDO_APROVACAO_ESCOPO
   artefatos?: {
     spec?: string;
     prd?: string;
