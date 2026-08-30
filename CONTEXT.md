@@ -26,18 +26,46 @@ Valores do campo de status de um projeto no Firestore, atualizados a cada etapa 
 
 **TRIAGEM_EM_ANDAMENTO**: O Agent Orchestrator está ativamente processando a requisição.
 
+**ELICITANDO**: O Agent Orchestrator gerou perguntas de elicitação e aguarda as respostas do usuário via Portfólio Interativo. A execução está suspensa até o usuário responder todos os cards de elicitação e disparar o envio.
+_Avoid_: Perguntando, coletando requisitos, esperando
+
 **GERANDO_ADR**: Etapa específica de geração de Architecture Decision Records dentro do pipeline.
 
-**CONCLUIDO**: O pipeline terminou com sucesso; os artefatos (README, ADR(s), tickets) estão gravados no documento e disponíveis para o Portfólio Interativo exibir.
+**CONCLUIDO**: O pipeline terminou com sucesso; os artefatos (spec, ADR(s), PRD, tickets) estão gravados no documento e disponíveis para download via ZIP.
 
 **AGUARDANDO_APROVACAO_ESCOPO**: A execução foi suspensa porque a Hierarquia de Bloqueio detectou uma mudança de escopo arriscada ou ambígua; aguarda decisão humana.
 _Avoid_: Pausado, bloqueado
 
 **FALHA_PROCESSAMENTO**: Uma tentativa de processamento falhou (timeout de API, JSON corrompido, queda do container), mas ainda dentro do limite de retentativas.
 
-**FALHA_DLQ**: As retentativas se esgotaram (ou a falha não é recuperável, ver `QUOTA_EXCEDIDA`) e a mensagem foi roteada para a Dead Letter Queue. Pedidos com motivo recuperável são reenfileirados automaticamente por um gatilho agendado (ver ticket 08); não há reenfileiramento manual pelo Portfólio Interativo — essa responsabilidade é só do backend.
+**FALHA_DLQ**: As retentativas se esgotaram (ou a falha não é recuperável, ver `QUOTA_EXCEDIDA`) e a mensagem foi roteada para a Dead Letter Queue. Pedidos com motivo recuperável são reenfileirados automaticamente por um gatilho agendado; não há reenfileiramento manual pelo Portfólio Interativo.
 
 **failure_reason**: Campo do documento que classifica por que um processamento falhou, gravado junto com `FALHA_PROCESSAMENTO`/`FALHA_DLQ`. Três valores: `QUOTA_EXCEDIDA` (falta de crédito/rate-limit do Gemini — nunca reenfileirado automaticamente, exige intervenção humana), `ERRO_TRANSITORIO` (rede/serviço instável — recuperável), `RESPOSTA_INVALIDA` (o modelo devolveu algo fora do formato esperado — recuperável).
+
+### Sessão de Elicitação
+
+**Sessão de Elicitação**:
+O conjunto de rodadas de perguntas e respostas trocadas entre o Agent Orchestrator e o usuário antes da geração dos artefatos. Cada sessão pertence a um projeto (identificado pelo ID do Firestore) e persiste como subcoleção `elicitacao` no documento do projeto. Máximo de 4 rodadas.
+_Avoid_: Chat, conversa, entrevista
+
+**Rodada de Elicitação**:
+Uma iteração da Sessão de Elicitação. Composta por: um conjunto de perguntas geradas pelo Agent Orchestrator (com opções de múltipla escolha + campo de texto livre) e as respostas do usuário. O Agent Orchestrator sinaliza `pronto: true` quando avalia ter contexto suficiente para gerar os artefatos; o usuário pode também forçar a geração antes disso.
+_Avoid_: Turno, pergunta-resposta
+
+**Card de Elicitação**:
+A representação visual de uma pergunta de elicitação no Portfólio Interativo, exibida no `PipelineStatusModal` durante o estado `ELICITANDO`. Cada card tem: texto da pergunta, opções de múltipla escolha (A, B, C…) e campo de input de texto livre. O botão "Enviar respostas" só ativa quando todos os cards da rodada estão respondidos.
+_Avoid_: Card Kanban (Cards de Elicitação são distintos das histórias de usuário do board Kanban)
+
+**Artefatos Gerados**:
+Os arquivos produzidos pelo Agent Orchestrator ao final da Sessão de Elicitação, entregues como ZIP para download. Estrutura canônica:
+```
+specs/<slug>/spec.md
+specs/<slug>/prd.md
+docs/adr/<N>-<slug>.md
+.scratch/<slug>/tickets/01-<ticket>.md
+```
+Projetados para serem descompactados na raiz do repositório do usuário sem conflito.
+_Avoid_: Outputs, resultados, documentos
 
 ### Resiliência e Governança
 
