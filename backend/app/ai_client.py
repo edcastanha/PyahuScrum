@@ -48,7 +48,7 @@ class VertexAIClient:
     - Application Default Credentials → Vertex AI (via gcloud / service account)
     """
 
-    def __init__(self, project: str | None = None, model: str = "gemini-2.5-flash"):
+    def __init__(self, project: str | None = None, model: str = "gemini-3.6-flash"):
         self._project = project or os.environ.get("GOOGLE_CLOUD_PROJECT", "pyahu-scrum-local")
         self._model = model
         # Normalizar: GEMINI_API_KEY → GOOGLE_API_KEY (exigido pelo SDK)
