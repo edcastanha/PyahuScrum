@@ -6,9 +6,12 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './router/ProtectedRoute';
 import './App.css';
 
-const LoginPage        = lazy(() => import('./pages/auth/LoginPage'));
-const DashboardPage    = lazy(() => import('./pages/dashboard/DashboardPage'));
-const ProjectsPage     = lazy(() => import('./pages/projects/ProjectsPage'));
+const LoginPage           = lazy(() => import('./pages/auth/LoginPage'));
+const DashboardPage       = lazy(() => import('./pages/dashboard/DashboardPage'));
+const ProjectsPage        = lazy(() => import('./pages/projects/ProjectsPage'));
+const ElicitacaoPage      = lazy(() => import('./pages/pipeline/ElicitacaoPage'));
+const ProgressoPage       = lazy(() => import('./pages/pipeline/ProgressoPage'));
+const ConcluidoPage       = lazy(() => import('./pages/pipeline/ConcluidoPage'));
 
 function App() {
   return (
@@ -34,6 +37,36 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <ProjectsPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/elicitacao"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ElicitacaoPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/progresso"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ProgressoPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/concluido"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ConcluidoPage />
                     </MainLayout>
                   </ProtectedRoute>
                 }
