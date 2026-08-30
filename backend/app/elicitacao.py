@@ -97,6 +97,63 @@ def _montar_prompt(idea: str, historico: list[RodadaElicitacao]) -> str:
     return "\n".join(partes)
 
 
+def _montar_prompt_resumo(idea: str, historico: list[RodadaElicitacao], feedback: str | None = None) -> str:
+    """Monta prompt para o Gemini gerar o resumo de escopo em markdown."""
+    partes = [f"## Ideia do projeto\n{idea}"]
+    for r in historico:
+        if not r.perguntas:
+            continue
+        partes.append(f"\n## Rodada {r.rodada} — Perguntas e Respostas")
+        for p in r.perguntas:
+            resp = next((rs for rs in r.respostas if rs.pergunta_id == p.id), None)
+            if resp:
+                parts_resp = []
+                if resp.opcao:
+                    parts_resp.append(f"opção: {resp.opcao}")
+                if resp.texto:
+                    parts_resp.append(f"detalhe: {resp.texto}")
+                resposta_texto = "; ".join(parts_resp) if parts_resp else "(sem resposta)"
+            else:
+                resposta_texto = "(sem resposta)"
+            partes.append(f"- **{p.texto}** → {resposta_texto}")
+
+    if feedback:
+        partes.append(f"\n## Feedback / Revisão do usuário\n{feedback}")
+
+    partes.append(
+        "\n## Instrução\n"
+        "Com base no histórico acima, gere um resumo de escopo do projeto em markdown com as seções:\n"
+        "## Ideia resumida\n## Requisitos\n## Escopo\n## Fora do escopo\n\n"
+        "Além do markdown, indique se precisa de mais informações do usuário respondendo em JSON:\n"
+        '{"precisa_mais_info": false, "perguntas_adicionais": [], "resumo_markdown": "..."}\n'
+        "Se `precisa_mais_info: true`, inclua até 3 perguntas em `perguntas_adicionais`.\n"
+        "Responda SOMENTE em JSON, sem markdown ao redor."
+    )
+    return "\n".join(partes)
+
+
+def _parse_resumo_gemini(raw: str) -> tuple[bool, list[Pergunta], str]:
+    """Parseia resposta do Gemini para o resumo de escopo.
+    Retorna (precisa_mais_info, perguntas_adicionais, resumo_markdown).
+    """
+    try:
+        data = json.loads(raw.strip())
+        precisa = bool(data.get("precisa_mais_info", False))
+        perguntas = [
+            Pergunta(
+                id=p.get("id", f"qa{i}"),
+                texto=p.get("texto", ""),
+                opcoes=p.get("opcoes", []),
+                permite_texto=p.get("permite_texto", True),
+            )
+            for i, p in enumerate(data.get("perguntas_adicionais", []), 1)
+        ]
+        resumo = data.get("resumo_markdown", "")
+        return precisa, perguntas, resumo
+    except (json.JSONDecodeError, KeyError, TypeError):
+        return False, [], "## Resumo\n\nNão foi possível gerar o resumo automaticamente."
+
+
 def _parse_resposta_gemini(raw: str) -> tuple[bool, list[Pergunta]]:
     """Parseia a resposta JSON do Gemini. Retorna (pronto, perguntas)."""
     try:
@@ -286,9 +343,10 @@ class ElicitacaoService:
         _salvar_rodada(project_id, nova_rodada)
         _atualizar_status_projeto(project_id, perguntas)
 
+        # Se Gemini sinaliza pronto OU atingiu MAX_RODADAS → gerar resumo HITL
         if pronto or numero_rodada >= MAX_RODADAS:
             historico_completo = _carregar_historico(project_id)
-            return self._gerar_artefatos(project_id, idea, historico_completo)
+            return self._gerar_resumo_escopo(project_id, idea, historico_completo)
 
         return {
             "status": ProjectStatus.ELICITANDO.value,
@@ -304,6 +362,88 @@ class ElicitacaoService:
                 for p in perguntas
             ],
         }
+
+    def _gerar_resumo_escopo(
+        self,
+        project_id: str,
+        idea: str,
+        historico: list[RodadaElicitacao],
+        feedback: str | None = None,
+    ) -> dict:
+        """Gera resumo de escopo em markdown e muda status para AGUARDANDO_APROVACAO_ESCOPO.
+
+        Se o Gemini indicar que precisa de mais dados (precisa_mais_info: true),
+        abre nova rodada de perguntas (volta para ELICITANDO).
+        """
+        db = get_client()
+        system_prompt = _load_system_prompt()
+        prompt = _montar_prompt_resumo(idea, historico, feedback=feedback)
+
+        raw = self._get_client().gerar_elicitacao(
+            system_prompt=system_prompt,
+            prompt=prompt,
+        )
+        precisa_mais, perguntas_adicionais, resumo_markdown = _parse_resumo_gemini(raw)
+
+        if precisa_mais and perguntas_adicionais:
+            # Gemini precisa de mais info → abre nova rodada
+            proxima_rodada = max((r.rodada for r in historico), default=0) + 1
+            nova_rodada = RodadaElicitacao(
+                rodada=proxima_rodada,
+                perguntas=perguntas_adicionais,
+                respostas=[],
+                pronto=False,
+            )
+            _salvar_rodada(project_id, nova_rodada)
+            _atualizar_status_projeto(project_id, perguntas_adicionais)
+            return {
+                "status": ProjectStatus.ELICITANDO.value,
+                "rodada": proxima_rodada,
+                "perguntas": [
+                    {"id": p.id, "texto": p.texto, "opcoes": p.opcoes, "permite_texto": p.permite_texto}
+                    for p in perguntas_adicionais
+                ],
+            }
+
+        # Tem informação suficiente → aguardar aprovação humana
+        db.collection("projects").document(project_id).update(
+            {
+                "status": ProjectStatus.AGUARDANDO_APROVACAO_ESCOPO.value,
+                "resumo_escopo": resumo_markdown,
+                "perguntas_abertas": [],
+            }
+        )
+        return {
+            "status": ProjectStatus.AGUARDANDO_APROVACAO_ESCOPO.value,
+            "resumo_escopo": resumo_markdown,
+        }
+
+    def aprovar_escopo(self, project_id: str) -> dict:
+        """Usuário aprovou o escopo → gerar artefatos."""
+        db = get_client()
+        doc = db.collection("projects").document(project_id).get()
+        if not doc.exists:
+            raise ValueError(f"Projeto {project_id} não encontrado.")
+        data = doc.to_dict() or {}
+        idea = data.get("raw_idea", "")
+        historico = _carregar_historico(project_id)
+        return self._gerar_artefatos(project_id, idea, historico)
+
+    def revisar_escopo(self, project_id: str, feedback: str) -> dict:
+        """Usuário enviou feedback de revisão.
+
+        Gemini analisa e decide:
+        - precisa_mais_info: true  → nova rodada de perguntas (ELICITANDO)
+        - precisa_mais_info: false → resumo atualizado (AGUARDANDO_APROVACAO_ESCOPO)
+        """
+        db = get_client()
+        doc = db.collection("projects").document(project_id).get()
+        if not doc.exists:
+            raise ValueError(f"Projeto {project_id} não encontrado.")
+        data = doc.to_dict() or {}
+        idea = data.get("raw_idea", "")
+        historico = _carregar_historico(project_id)
+        return self._gerar_resumo_escopo(project_id, idea, historico, feedback=feedback)
 
     def _gerar_artefatos(self, project_id: str, idea: str, historico: list[RodadaElicitacao]) -> dict:
         """Gera os artefatos finais e persiste no Firestore com status CONCLUIDO."""
