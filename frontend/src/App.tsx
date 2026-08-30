@@ -9,7 +9,9 @@ import './App.css';
 const LoginPage           = lazy(() => import('./pages/auth/LoginPage'));
 const DashboardPage       = lazy(() => import('./pages/dashboard/DashboardPage'));
 const ProjectsPage        = lazy(() => import('./pages/projects/ProjectsPage'));
-const UserStoriesPage     = lazy(() => import('./pages/user-stories/UserStoriesPage'));
+const ElicitacaoPage      = lazy(() => import('./pages/pipeline/ElicitacaoPage'));
+const ProgressoPage       = lazy(() => import('./pages/pipeline/ProgressoPage'));
+const ConcluidoPage       = lazy(() => import('./pages/pipeline/ConcluidoPage'));
 
 function App() {
   return (
@@ -40,21 +42,31 @@ function App() {
                 }
               />
               <Route
-                path="/user-stories"
+                path="/pipeline/elicitacao"
                 element={
                   <ProtectedRoute>
                     <MainLayout>
-                      <UserStoriesPage />
+                      <ElicitacaoPage />
                     </MainLayout>
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/user-stories/:projectId"
+                path="/pipeline/progresso"
                 element={
                   <ProtectedRoute>
                     <MainLayout>
-                      <UserStoriesPage />
+                      <ProgressoPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/concluido"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ConcluidoPage />
                     </MainLayout>
                   </ProtectedRoute>
                 }
