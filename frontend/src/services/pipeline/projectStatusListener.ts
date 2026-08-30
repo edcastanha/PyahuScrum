@@ -1,21 +1,23 @@
 import {
   collection,
+  connectFirestoreEmulator,
   doc,
+  getFirestore,
   onSnapshot,
   query,
   where,
   Firestore,
-  connectFirestoreEmulator,
-  getFirestore,
 } from 'firebase/firestore';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT, FIRESTORE_PROJECT_ID } from '../../config/firestore';
+import {
+  FIREBASE_CONFIG,
+  USE_EMULATOR,
+  FIRESTORE_EMULATOR_HOST,
+  FIRESTORE_EMULATOR_PORT,
+} from '../../config/firestore';
 
 export interface PipelineStatusUpdate {
   status: string;
-  readme?: string;
-  adrs?: string[];
-  tickets?: string[];
   perguntas_abertas?: Array<{
     id: string;
     texto: string;
@@ -24,7 +26,6 @@ export interface PipelineStatusUpdate {
   }>;
   rodada_atual?: number;
   pronto?: boolean;
-  // Artefatos para download (CONCLUIDO)
   artefatos?: {
     spec?: string;
     prd?: string;
@@ -60,14 +61,19 @@ let firestoreInstance: Firestore | null = null;
 
 function getFirestoreClient(): Firestore {
   if (firestoreInstance) return firestoreInstance;
-  const app = getApps().length ? getApp() : initializeApp({ projectId: FIRESTORE_PROJECT_ID });
+
+  const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
   const db = getFirestore(app);
-  connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
+
+  if (USE_EMULATOR) {
+    connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
+  }
+
   firestoreInstance = db;
   return db;
 }
 
-/** Assina o documento de um único projeto (para o modal). */
+/** Assina o documento de um único projeto. */
 export function subscribeToProjectStatus(
   projectId: string,
   onUpdate: (update: PipelineStatusUpdate) => void,
@@ -79,16 +85,13 @@ export function subscribeToProjectStatus(
   });
 }
 
-/** Assina a coleção de projetos filtrada por lista de status. */
+/** Assina a coleção de projetos filtrada por status. */
 export function subscribeToProjectsByStatus(
   statuses: string[],
   onUpdate: (projects: ProjectListItem[]) => void,
 ): () => void {
   const db = getFirestoreClient();
-  const q = query(
-    collection(db, 'projects'),
-    where('status', 'in', statuses),
-  );
+  const q = query(collection(db, 'projects'), where('status', 'in', statuses));
   return onSnapshot(q, snap => {
     const list: ProjectListItem[] = snap.docs.map(d => ({
       id: d.id,
@@ -99,13 +102,12 @@ export function subscribeToProjectsByStatus(
   });
 }
 
-/** Assina a subcoleção elicitacao/{rodada} de um projeto para obter o histórico. */
+/** Assina a subcoleção elicitacao/{rodada} de um projeto. */
 export function subscribeToRodadas(
   projectId: string,
   onUpdate: (rodadas: RodadaHistorico[]) => void,
 ): () => void {
-  const db = getFirestoreClient();
-  const col = collection(db, 'projects', projectId, 'elicitacao');
+  const col = collection(getFirestoreClient(), 'projects', projectId, 'elicitacao');
   return onSnapshot(col, snap => {
     const rodadas: RodadaHistorico[] = snap.docs
       .map(d => {
