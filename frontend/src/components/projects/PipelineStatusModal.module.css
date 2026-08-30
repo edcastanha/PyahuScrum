@@ -108,3 +108,24 @@
 .closeButton:hover {
   background-color: var(--clr-blue-deep);
 }
+
+.concluido {
+  margin: 1rem 0;
+}
+.concluido p {
+  font-size: 0.9rem;
+  color: var(--clr-text-muted, #64748b);
+  margin-bottom: 0.75rem;
+}
+.downloadBtn {
+  padding: 0.65rem 1.4rem;
+  background: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.downloadBtn:hover { background: #047857; }

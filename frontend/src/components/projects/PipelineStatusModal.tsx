@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   PipelineStatusUpdate,
   subscribeToProjectStatus,
 } from '../../services/pipeline/projectStatusListener';
+import ElicitacaoRound from './ElicitacaoRound';
+import { PerguntaElicitacao } from './ElicitacaoCard';
+import { AGENT_ORCHESTRATOR_BASE_URL } from '../../config/api';
 import styles from './PipelineStatusModal.module.css';
 
 interface PipelineStatusModalProps {
@@ -11,13 +13,10 @@ interface PipelineStatusModalProps {
   onClose: () => void;
 }
 
-// Fonte de verdade do vocabulário: backend/app/status.py (ProjectStatus) e
-// CONTEXT.md. Sem tipos compartilhados entre backend (Python) e frontend
-// (TS) hoje -- um status novo cai no fallback `status` cru (linha abaixo),
-// sem quebrar, mas sem tradução amigável até este mapa ser atualizado.
 const STATUS_LABELS: Record<string, string> = {
   TRIAGEM_INICIAL: 'Na fila',
   TRIAGEM_EM_ANDAMENTO: 'Processando',
+  ELICITANDO: 'Aguardando suas respostas',
   GERANDO_ADR: 'Gerando documentação',
   CONCLUIDO: 'Concluído',
   AGUARDANDO_APROVACAO_ESCOPO: 'Aguardando aprovação',
@@ -45,6 +44,21 @@ const PipelineStatusModal: React.FC<PipelineStatusModalProps> = ({ projectId, on
   const tone = toneFor(status);
   const failed = status !== null && FAILED_STATUSES.has(status);
 
+  const handleEnviado = useCallback((resultado: Record<string, unknown>) => {
+    // onSnapshot atualiza automaticamente — nada a fazer aqui;
+    // o resultado é tratado pelo Firestore em tempo real.
+    console.debug('[PipelineStatusModal] respostas enviadas:', resultado);
+  }, []);
+
+  const handleDownload = useCallback(() => {
+    window.open(`${AGENT_ORCHESTRATOR_BASE_URL}/projects/${projectId}/download`, '_blank');
+  }, [projectId]);
+
+  // Extrai perguntas_abertas e rodada_atual do update do Firestore
+  const perguntasAbertas = (update as Record<string, unknown> | null)?.['perguntas_abertas'] as PerguntaElicitacao[] | undefined;
+  const rodadaAtual = ((update as Record<string, unknown> | null)?.['rodada_atual'] as number | undefined) ?? 1;
+  const prontoElicitacao = ((update as Record<string, unknown> | null)?.['pronto'] as boolean | undefined) ?? false;
+
   return (
     <div className={styles.modalOverlay}>
       <div
@@ -58,44 +72,40 @@ const PipelineStatusModal: React.FC<PipelineStatusModalProps> = ({ projectId, on
           {status ? STATUS_LABELS[status] ?? status : 'Aguardando...'}
         </span>
 
+        {/* ── Estado: ELICITANDO ──────────────────────────────────────────── */}
+        {status === 'ELICITANDO' && perguntasAbertas && perguntasAbertas.length > 0 && (
+          <ElicitacaoRound
+            perguntas={perguntasAbertas}
+            rodada={rodadaAtual}
+            projectId={projectId}
+            pronto={prontoElicitacao}
+            onEnviado={handleEnviado}
+          />
+        )}
+
+        {/* ── Estado: CONCLUIDO ───────────────────────────────────────────── */}
+        {status === 'CONCLUIDO' && (
+          <div className={styles.concluido}>
+            <p>
+              Os artefatos do projeto foram gerados com sucesso! Baixe o ZIP e
+              descompacte na raiz do seu repositório.
+            </p>
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              onClick={handleDownload}
+            >
+              ⬇ Baixar ZIP
+            </button>
+          </div>
+        )}
+
+        {/* ── Estado: FALHA ───────────────────────────────────────────────── */}
         {failed && (
           <p>
             Não foi possível concluir a geração automática dos artefatos. Você pode continuar
             usando o projeto normalmente; tente novamente mais tarde.
           </p>
-        )}
-
-        {status === 'CONCLUIDO' && (
-          <>
-            {update?.readme && (
-              <div className={styles.artifactSection}>
-                <h3>README</h3>
-                <div className={styles.markdown}>
-                  <ReactMarkdown>{update.readme}</ReactMarkdown>
-                </div>
-              </div>
-            )}
-            {update?.adrs && update.adrs.length > 0 && (
-              <div className={styles.artifactSection}>
-                <h3>ADRs</h3>
-                {update.adrs.map((adr, index) => (
-                  <div className={styles.markdown} key={index}>
-                    <ReactMarkdown>{adr}</ReactMarkdown>
-                  </div>
-                ))}
-              </div>
-            )}
-            {update?.tickets && update.tickets.length > 0 && (
-              <div className={styles.artifactSection}>
-                <h3>Tickets</h3>
-                {update.tickets.map((ticket, index) => (
-                  <div className={styles.markdown} key={index}>
-                    <ReactMarkdown>{ticket}</ReactMarkdown>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
         )}
 
         <button type="button" className={styles.closeButton} onClick={onClose}>
