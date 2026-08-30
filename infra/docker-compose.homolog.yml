@@ -1,0 +1,35 @@
+name: pyahu-scrum-homolog
+
+# Homologação — branch: develop
+# Frontend: https://homolog.pyahuscrum.adbfn6.easypanel.host
+#
+# Uso (rodar sempre da branch develop):
+#   git checkout develop && git pull origin develop
+#   docker compose -f infra/docker-compose.homolog.yml up -d --build
+
+services:
+  pyahuscrum-frontend-homolog:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: prod
+    container_name: pyahuscrum-frontend-homolog
+    networks:
+      - easypanel
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=easypanel
+      - traefik.http.routers.pyahuscrum-frontend-homolog.rule=Host(`homolog.pyahuscrum.adbfn6.easypanel.host`)
+      - traefik.http.routers.pyahuscrum-frontend-homolog.entrypoints=https
+      - traefik.http.routers.pyahuscrum-frontend-homolog.tls.certresolver=letsencrypt
+      - traefik.http.services.pyahuscrum-frontend-homolog.loadbalancer.server.port=80
+    restart: unless-stopped
+
+networks:
+  easypanel:
+    external: true
