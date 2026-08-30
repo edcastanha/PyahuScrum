@@ -144,9 +144,45 @@ def delete_project(project_id: str) -> None:
         raise HTTPException(status_code=404, detail=f"Projeto {project_id} não encontrado.")
 
 
+class RevisaoRequest(BaseModel):
+    feedback: str
+
+
+@app.post("/projects/{project_id}/aprovar", status_code=status.HTTP_202_ACCEPTED)
+def aprovar_escopo(project_id: str) -> dict:
+    """Usuário aprovou o resumo de escopo → dispara geração de artefatos (assíncrono)."""
+    doc = get_client().collection("projects").document(project_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail=f"Projeto {project_id} não encontrado.")
+    data = doc.to_dict() or {}
+    if data.get("status") != "AGUARDANDO_APROVACAO_ESCOPO":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Projeto não está aguardando aprovação — status atual: {data.get('status')}.",
+        )
+    messaging.publish_to_elicitacao({
+        "project_id": project_id,
+        "tipo": "aprovar",
+    })
+    return {"status": "PROCESSANDO", "mensagem": "Aprovação recebida — gerando artefatos."}
+
+
+@app.post("/projects/{project_id}/revisao", status_code=status.HTTP_202_ACCEPTED)
+def revisar_escopo(project_id: str, payload: RevisaoRequest) -> dict:
+    """Usuário enviou feedback de revisão → Gemini analisa e decide se precisa mais info."""
+    doc = get_client().collection("projects").document(project_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail=f"Projeto {project_id} não encontrado.")
+    messaging.publish_to_elicitacao({
+        "project_id": project_id,
+        "tipo": "revisao",
+        "feedback": payload.feedback,
+    })
+    return {"status": "PROCESSANDO", "mensagem": "Feedback recebido — analisando revisão."}
+
+
 @app.get("/projects/{project_id}/download")
 def download_artefatos(project_id: str):
-    """Retorna o ZIP com os artefatos gerados. Só disponível quando CONCLUIDO."""
     from fastapi.responses import StreamingResponse
     from .artefatos import GeneratedArtifactsV2, _build_zip, _slugify
 
