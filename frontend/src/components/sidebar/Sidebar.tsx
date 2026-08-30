@@ -8,6 +8,7 @@ import {
   FolderKanban,
   Github,
   Code2,
+  LayoutList,
   Menu,
   X
 } from 'lucide-react';
@@ -69,6 +70,9 @@ const Sidebar: React.FC = () => {
         </NavLink>
         <NavLink to="/projects" className={({ isActive }) => isActive ? styles.active : ''}>
           <FolderKanban /> Gerenciar projetos
+        </NavLink>
+        <NavLink to="/user-stories" className={({ isActive }) => isActive ? styles.active : ''}>
+          <LayoutList /> Kanban de histórias
         </NavLink>
       </nav>
       <div className={styles.quickLinks}>
