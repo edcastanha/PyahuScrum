@@ -54,10 +54,33 @@ export class ProjectService {
     const projects = this.getProjects();
     return {
       total: projects.length,
-      // completed derivado do pipeline no futuro (E3-T11+);
-      // por ora retorna 0 (sem campo status na entidade)
-      completed: 0,
+      completed: 0,   // derivado do Firestore (E3-T11+)
     };
+  }
+
+  getPipelineStats() {
+    /**
+     * Contagens de status do pipeline por projeto.
+     * Lido de `pipeline_statuses` no localStorage — atualizado pela
+     * `subscribeToProjectStatus` em tempo real (via onSnapshot do Firestore).
+     * Enquanto o backend não estiver deployado, retorna zeros.
+     */
+    const raw = storageService.getItem<Record<string, string>>('pipeline_statuses') ?? {};
+    const values = Object.values(raw);
+    return {
+      total: this.getProjects().length,
+      elicitando:  values.filter(s => s === 'ELICITANDO').length,
+      gerandoAdr:  values.filter(s => s === 'GERANDO_ADR' || s === 'TRIAGEM_EM_ANDAMENTO').length,
+      concluido:   values.filter(s => s === 'CONCLUIDO').length,
+      falha:       values.filter(s => s === 'FALHA_PROCESSAMENTO' || s === 'FALHA_DLQ').length,
+    };
+  }
+
+  /** Atualiza o status do pipeline para um projeto no cache local. */
+  updatePipelineStatus(projectId: string, status: string) {
+    const statuses = storageService.getItem<Record<string, string>>('pipeline_statuses') ?? {};
+    statuses[projectId] = status;
+    storageService.setItem('pipeline_statuses', statuses);
   }
 
   private initializeProjects(): Project[] {
