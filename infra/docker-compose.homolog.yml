@@ -49,7 +49,7 @@ services:
       - RABBITMQ_URL=amqp://guest:guest@pyahuscrum-rabbitmq-homolog:5672/
       - FIRESTORE_EMULATOR_HOST=pyahuscrum-firestore-homolog:8080
       - GOOGLE_CLOUD_PROJECT=pyahu-scrum-homolog
-      - START_CONSUMER=false          # Elicitação é síncrona; consumer desativado nesta entrega
+      - START_CONSUMER=true          # Consumer ativo nas duas filas (pipeline + elicitacao)
       - CORS_ALLOWED_ORIGINS=https://homolog.pyahuscrum.adbfn6.easypanel.host,https://pyahuscrum.adbfn6.easypanel.host,http://localhost:3000
     networks:
       - easypanel
