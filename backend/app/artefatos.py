@@ -75,19 +75,38 @@ def generate_artifacts_from_history(
     idea: str,
     historico: list[RodadaElicitacao],
     ai_client=None,
+    rag_service=None,
+    project_id: str = "",
 ) -> GeneratedArtifactsV2:
     """Gera artefatos completos a partir do histórico da Sessão de Elicitação.
 
-    O `ai_client` é injetado para permitir fake em testes.
+    O `ai_client` e `rag_service` são injetados para permitir fake em testes.
+    O `rag_service` injeta contexto de projetos similares antes da geração.
     """
     if ai_client is None:
         from .ai_client import VertexAIClient
         ai_client = VertexAIClient()
 
+    # RAG: recuperar contexto histórico de projetos similares
+    rag_context = ""
+    if rag_service is None:
+        try:
+            from .rag import RagService
+            rag_service = RagService()
+        except Exception:
+            rag_service = None
+
+    if rag_service and idea:
+        try:
+            similar = rag_service.retrieve_similar(idea=idea, top_k=3, exclude_id=project_id)
+            rag_context = rag_service.build_rag_context(similar)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("RAG falhou silenciosamente: %s", exc)
+
     system_prompt = _load_system_prompt()
-    # Monta prompt com histórico completo + instrução de geração
     base = _montar_prompt(idea, historico)
-    prompt = base + "\n\n" + _PROMPT_ARTEFATOS
+    prompt = base + rag_context + "\n\n" + _PROMPT_ARTEFATOS
 
     raw = ai_client.gerar_artefatos(system_prompt=system_prompt, prompt=prompt)
 
