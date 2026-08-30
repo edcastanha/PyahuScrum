@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import ElicitacaoCard, { PerguntaElicitacao } from './ElicitacaoCard';
-import { AGENT_ORCHESTRATOR_BASE_URL } from '../../config/api';
+import { sendRoundAnswers } from '../../services/pipeline/pipelineService';
 import styles from './ElicitacaoRound.module.css';
 
 interface RespostaMap {
@@ -49,23 +49,14 @@ const ElicitacaoRound: React.FC<ElicitacaoRoundProps> = ({
   const _enviar = useCallback(async (forcarGeracao: boolean) => {
     setEnviando(true);
     try {
-      const payload = {
-        rodada,
-        respostas: perguntas.map(p => ({
-          pergunta_id: p.id,
-          opcao: respostas[p.id]?.opcao ?? null,
-          texto: respostas[p.id]?.texto ?? null,
-        })),
-        forcar_geracao: forcarGeracao,
-      };
-      const resp = await fetch(`${AGENT_ORCHESTRATOR_BASE_URL}/projects/${projectId}/respostas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      onEnviado(data);
+      const respostasPayload = perguntas.map(p => ({
+        pergunta_id: p.id,
+        opcao: respostas[p.id]?.opcao ?? null,
+        texto: respostas[p.id]?.texto ?? null,
+      }));
+      // 202 Accepted — o onSnapshot notificará quando o backend processar
+      await sendRoundAnswers(projectId, rodada, respostasPayload, forcarGeracao);
+      onEnviado({ status: 'PROCESSANDO' });
     } catch (err) {
       console.error('Erro ao enviar respostas:', err);
     } finally {
