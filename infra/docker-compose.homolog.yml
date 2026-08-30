@@ -1,18 +1,25 @@
 name: pyahu-scrum-homolog
 
 # Homologação — branch: develop
-# Frontend: https://homolog.pyahuscrum.adbfn6.easypanel.host
+# Frontend:  https://homolog.pyahuscrum.adbfn6.easypanel.host
+# API:       https://api-homolog.pyahuscrum.adbfn6.easypanel.host
 #
-# Uso (rodar sempre da branch develop):
+# Uso:
 #   git checkout develop && git pull origin develop
 #   docker compose -f infra/docker-compose.homolog.yml up -d --build
+#
+# Pré-requisito: backend/.env com GEMINI_API_KEY
 
 services:
+
+  # ── Frontend — React SPA via nginx ──────────────────────────────────────────
   pyahuscrum-frontend-homolog:
     build:
       context: ..
       dockerfile: infra/Dockerfile
       target: prod
+      args:
+        REACT_APP_AGENT_ORCHESTRATOR_URL: https://api-homolog.pyahuscrum.adbfn6.easypanel.host
     container_name: pyahuscrum-frontend-homolog
     networks:
       - easypanel
@@ -29,6 +36,78 @@ services:
       - traefik.http.routers.pyahuscrum-frontend-homolog.tls.certresolver=letsencrypt
       - traefik.http.services.pyahuscrum-frontend-homolog.loadbalancer.server.port=80
     restart: unless-stopped
+
+  # ── Backend — FastAPI Agent Orchestrator ────────────────────────────────────
+  pyahuscrum-api-homolog:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: pyahuscrum-api-homolog
+    env_file:
+      - ../backend/.env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@pyahuscrum-rabbitmq-homolog:5672/
+      - FIRESTORE_EMULATOR_HOST=pyahuscrum-firestore-homolog:8080
+      - GOOGLE_CLOUD_PROJECT=pyahu-scrum-homolog
+      - START_CONSUMER=false          # Elicitação é síncrona; consumer desativado nesta entrega
+      - CORS_ALLOWED_ORIGINS=https://homolog.pyahuscrum.adbfn6.easypanel.host,https://pyahuscrum.adbfn6.easypanel.host,http://localhost:3000
+    networks:
+      - easypanel
+    depends_on:
+      pyahuscrum-rabbitmq-homolog:
+        condition: service_healthy
+      pyahuscrum-firestore-homolog:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=easypanel
+      - traefik.http.routers.pyahuscrum-api-homolog.rule=Host(`api-homolog.pyahuscrum.adbfn6.easypanel.host`)
+      - traefik.http.routers.pyahuscrum-api-homolog.entrypoints=https
+      - traefik.http.routers.pyahuscrum-api-homolog.tls.certresolver=letsencrypt
+      - traefik.http.services.pyahuscrum-api-homolog.loadbalancer.server.port=8000
+    restart: unless-stopped
+
+  # ── RabbitMQ ────────────────────────────────────────────────────────────────
+  pyahuscrum-rabbitmq-homolog:
+    image: rabbitmq:3.13-alpine
+    container_name: pyahuscrum-rabbitmq-homolog
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - easypanel
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - pyahuscrum-rabbitmq-homolog-data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  # ── Firestore Emulador ──────────────────────────────────────────────────────
+  pyahuscrum-firestore-homolog:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    container_name: pyahuscrum-firestore-homolog
+    command: >
+      gcloud emulators firestore start
+      --host-port=0.0.0.0:8080
+      --project=pyahu-scrum-homolog
+    networks:
+      - easypanel
+    volumes:
+      - pyahuscrum-firestore-homolog-data:/root/.config/gcloud
+    restart: unless-stopped
+
+volumes:
+  pyahuscrum-rabbitmq-homolog-data:
+  pyahuscrum-firestore-homolog-data:
 
 networks:
   easypanel:
