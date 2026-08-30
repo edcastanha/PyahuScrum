@@ -6,7 +6,7 @@ import styles from './ProjectList.module.css';
 interface ProjectListProps {
   projects: Project[];
   onEdit: (project: Project) => void;
-  onDelete?: (id: number) => void;
+  onDelete?: (id: string) => void;
 }
 
 const ProjectList: React.FC<ProjectListProps> = ({ projects, onEdit, onDelete }) => {

@@ -5,49 +5,29 @@ import styles from './ProjectListItem.module.css';
 interface ProjectListItemProps {
   project: Project;
   onEdit: (project: Project) => void;
-  onDelete?: (id: number) => void;
+  onDelete?: (id: string) => void;
 }
 
 const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit, onDelete }) => {
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'active':
-        return styles.active;
-      case 'completed':
-        return styles.completed;
-      case 'inactive':
-        return styles.inactive;
-      default:
-        return '';
-    }
-  };
-
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
         <h3>{project.name}</h3>
-        <div className={styles.headerActions}>
-          <span className={`${styles.status} ${getStatusClass(project.status)}`}>
-            {project.status}
-          </span>
-          <div className={styles.buttonGroup}>
-            <button onClick={() => onEdit(project)} className={styles.editButton}>Editar</button>
-            {onDelete && (
-              <button onClick={() => onDelete(project.id)} className={styles.deleteButton}>
-                Excluir
-              </button>
-            )}
-          </div>
+        <div className={styles.buttonGroup}>
+          <button onClick={() => onEdit(project)} className={styles.editButton}>
+            Editar
+          </button>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(project.id)}
+              className={styles.deleteButton}
+            >
+              Excluir
+            </button>
+          )}
         </div>
       </div>
-      <p>{project.description}</p>
-      <div className={styles.progressBarContainer}>
-        <div
-          className={styles.progressBar}
-          style={{ transform: `scaleX(${project.progress / 100})` }}
-        ></div>
-      </div>
-      <span>{project.progress}%</span>
+      <p className={styles.description}>{project.description}</p>
     </div>
   );
 };
