@@ -1,12 +1,17 @@
 import React, { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import styles from './LoginPage.module.css';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const navigate = useNavigate();
-  const { loginWithGithub, isLoggingIn, errorMessage, clearError, profile } = useAuth();
+  const { loginWithGithub, isLoggingIn, errorMessage, clearError, isAuthenticated, isHydrated } = useAuth();
+
+  // Guard: usuário já autenticado não precisa ver o login
+  if (isHydrated && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -45,7 +50,6 @@ const LoginPage: React.FC = () => {
         </button>
 
         {errorMessage ? <p role="alert" className={styles.error}>{errorMessage}</p> : null}
-        {profile ? <p className={styles.success}>Bem-vindo, {profile.login}</p> : null}
       </form>
     </div>
   );
