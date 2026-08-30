@@ -1,3 +1,11 @@
+"""API do Agent Orchestrator — endpoints FastAPI.
+
+Fluxo assíncrono (ADR-004 + ADR-005):
+  POST /projects          → salva Firestore (TRIAGEM_INICIAL) + publica pyahu.pipeline
+  POST /projects/{id}/respostas → publica pyahu.elicitacao, retorna 202
+  GET  /projects/{id}/download  → ZIP dos artefatos (status CONCLUIDO)
+  DELETE /projects/{id}   → delete cascade (Firestore + subcoleções)
+"""
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -8,11 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import consumer, dlq_sweeper, firestore_client, messaging, projects
-from .elicitacao import ElicitacaoService, Resposta
 from .firestore_client import get_client
 
-# ── CORS ───────────────────────────────────────────────────────────────────────
-# Origens permitidas: frontend homolog + prod + dev local
 _CORS_ORIGINS = [
     o.strip()
     for o in os.environ.get(
@@ -52,12 +57,13 @@ app.add_middleware(
 )
 
 
+# ── Health ─────────────────────────────────────────────────────────────────────
+
 @app.get("/health")
 def health(response: Response) -> dict:
     rabbitmq_ok = messaging.check_connection()
     firestore_ok = firestore_client.check_connection()
     healthy = rabbitmq_ok and firestore_ok
-
     response.status_code = status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE
     return {
         "status": "ok" if healthy else "degraded",
@@ -66,8 +72,7 @@ def health(response: Response) -> dict:
     }
 
 
-# ── Modelos de entrada ─────────────────────────────────────────────────────────
-
+# ── Modelos ────────────────────────────────────────────────────────────────────
 
 class ProjectCreateRequest(BaseModel):
     idea: str
@@ -87,57 +92,62 @@ class RespostasRequest(BaseModel):
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
-
 @app.post("/projects", status_code=status.HTTP_201_CREATED)
-def create_project(payload: ProjectCreateRequest, ai_client=None) -> dict:
-    """Cria o projeto no Firestore e inicia a Rodada 1 de Elicitação.
+def create_project(payload: ProjectCreateRequest) -> dict:
+    """Cria o projeto e publica na fila de elicitação (assíncrono).
 
-    O `ai_client` pode ser injetado nos testes para evitar chamada real ao Gemini.
+    Retorna imediatamente com {id, status: TRIAGEM_INICIAL}.
+    O consumer processará a Rodada 1 e atualizará o Firestore para ELICITANDO.
     """
     project_data = projects.create_project(payload.idea)
     project_id = project_data["id"]
 
-    service = ElicitacaoService(ai_client=ai_client)
-    resultado = service.iniciar_elicitacao(project_id=project_id, idea=payload.idea)
+    messaging.publish_to_pipeline({
+        "project_id": project_id,
+        "idea": payload.idea,
+    })
 
-    return {"id": project_id, **resultado}
+    return {"id": project_id, "status": project_data["status"]}
 
 
-@app.post("/projects/{project_id}/respostas")
-def enviar_respostas(project_id: str, payload: RespostasRequest, ai_client=None) -> dict:
-    """Recebe as respostas da Rodada N e avança para a próxima rodada (ou gera artefatos).
+@app.post("/projects/{project_id}/respostas", status_code=status.HTTP_202_ACCEPTED)
+def enviar_respostas(project_id: str, payload: RespostasRequest) -> dict:
+    """Publica as respostas na fila de elicitação (assíncrono).
 
-    O `ai_client` pode ser injetado nos testes para evitar chamada real ao Gemini.
+    Retorna 202 imediatamente. O consumer processará e atualizará o Firestore.
     """
-    respostas = [
-        Resposta(
-            pergunta_id=r.pergunta_id,
-            opcao=r.opcao,
-            texto=r.texto,
-        )
-        for r in payload.respostas
-    ]
+    doc = get_client().collection("projects").document(project_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail=f"Projeto {project_id} não encontrado.")
 
-    service = ElicitacaoService(ai_client=ai_client)
-    try:
-        resultado = service.processar_respostas(
-            project_id=project_id,
-            numero_rodada=payload.rodada,
-            respostas_novas=respostas,
-            forcar_geracao=payload.forcar_geracao,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    messaging.publish_to_elicitacao({
+        "project_id": project_id,
+        "rodada": payload.rodada,
+        "respostas": [
+            {"pergunta_id": r.pergunta_id, "opcao": r.opcao, "texto": r.texto}
+            for r in payload.respostas
+        ],
+        "forcar_geracao": payload.forcar_geracao,
+    })
 
-    return resultado
+    return {"status": "PROCESSANDO", "mensagem": "Respostas recebidas e em processamento."}
+
+
+@app.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project(project_id: str) -> None:
+    """Remove o projeto e todos os dados associados (delete cascade).
+
+    Remove: documento principal + subcoleção elicitacao.
+    Mensagens pendentes na fila serão descartadas pelo consumer (_project_exists guard).
+    """
+    found = projects.delete_project(project_id)
+    if not found:
+        raise HTTPException(status_code=404, detail=f"Projeto {project_id} não encontrado.")
 
 
 @app.get("/projects/{project_id}/download")
 def download_artefatos(project_id: str):
-    """Retorna o ZIP com os artefatos gerados (spec, prd, ADRs, tickets).
-
-    Só disponível quando o projeto está com status CONCLUIDO.
-    """
+    """Retorna o ZIP com os artefatos gerados. Só disponível quando CONCLUIDO."""
     from fastapi.responses import StreamingResponse
     from .artefatos import GeneratedArtifactsV2, _build_zip, _slugify
 
@@ -149,20 +159,18 @@ def download_artefatos(project_id: str):
     if data.get("status") != "CONCLUIDO":
         raise HTTPException(
             status_code=409,
-            detail=f"Artefatos ainda não disponíveis — status: {data.get('status')}."
+            detail=f"Artefatos ainda não disponíveis — status: {data.get('status')}.",
         )
 
-    raw_artefatos = data.get("artefatos", {})
+    raw = data.get("artefatos", {})
     artefatos = GeneratedArtifactsV2(
-        spec=raw_artefatos.get("spec", ""),
-        prd=raw_artefatos.get("prd", ""),
-        adrs=raw_artefatos.get("adrs", []),
-        tickets=raw_artefatos.get("tickets", []),
+        spec=raw.get("spec", ""),
+        prd=raw.get("prd", ""),
+        adrs=raw.get("adrs", []),
+        tickets=raw.get("tickets", []),
     )
 
-    idea = data.get("raw_idea", "projeto")
-    slug = _slugify(idea[:50])  # limitar comprimento do slug
-
+    slug = _slugify(data.get("raw_idea", "projeto")[:50])
     buf = _build_zip(slug, artefatos)
 
     return StreamingResponse(
