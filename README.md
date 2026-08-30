@@ -1,116 +1,219 @@
 # Pyahu Scrum 🚀
 
-Bem-vindo ao **Pyahu Scrum**, um framework autônomo de orquestração desenvolvido para a categoria *Taskmaster* do Google Agent Hackathon. 
+Bem-vindo ao **Pyahu Scrum**, um framework autônomo de orquestração desenvolvido para a categoria *Taskmaster* do Google Agent Hackathon.
 
-Este projeto democratiza a engenharia de decisão: ele captura ideias brutas de negócio e, através de agentes assíncronos rodando em segundo plano, as traduz em especificações técnicas rigorosas (ADRs) e tickets de desenvolvimento executáveis.
+Este projeto democratiza a engenharia de decisão: captura ideias brutas de negócio e, através de agentes assíncronos rodando em segundo plano, as traduz em especificações técnicas rigorosas (ADRs, spec, PRD) e tickets de desenvolvimento executáveis — tudo via elicitação interativa com o Gemini.
+
+---
+
+## 🌐 Ambientes
+
+| Ambiente | URL |
+|---|---|
+| **Homologação** (develop) | https://homolog.pyahuscrum.adbfn6.easypanel.host |
+| **API** | https://api-homolog.pyahuscrum.adbfn6.easypanel.host |
+| **Firestore** | [console.firebase.google.com/project/pyahu-scrum/firestore](https://console.firebase.google.com/project/pyahu-scrum/firestore) |
+
+---
 
 ## 🏗️ Estrutura do Repositório (Monorepo)
 
-O projeto está dividido em duas camadas principais para garantir desacoplamento e escalabilidade:
+```
+PyahuScrum/
+├── frontend/          # React/TypeScript — interface do pipeline
+├── backend/           # FastAPI — Agent Orchestrator (Python)
+├── infra/             # Dockerfiles + docker-compose (homolog/prod)
+├── specs/             # Specs e PRDs por fatia
+├── docs/adr/          # Architecture Decision Records
+├── firestore.rules    # Security Rules do Firestore
+└── firebase.json      # Config para deploy das rules via CLI
+```
 
-*   **/frontend** (`DevPortfolio`): Interface de usuário e gestão visual.
-*   **/backend** (`Agent Orchestrator`): Motor assíncrono em Python responsável pelas integrações com Google Cloud e GenAI SDK.
-*   **/.agents**: Diretório de *skills* e diretrizes de comportamento do agente (baseado em melhores práticas de engenharia).
+---
 
-## ⚙️ Arquitetura de Software
+## ⚙️ Arquitetura
 
-A arquitetura orientada a eventos garante que a interface do usuário nunca fique bloqueada enquanto os agentes realizam o trabalho pesado.
+A arquitetura orientada a eventos garante que a interface nunca fique bloqueada enquanto os agentes realizam o trabalho pesado.
+
+```
+Usuário cria projeto
+   ↓
+POST /projects  →  Firestore (TRIAGEM_INICIAL)  →  pyahu.pipeline (RabbitMQ)
+                                                          ↓
+                                                    Consumer (thread)
+                                                          ↓
+                                                    Gemini (Rodada 1)
+                                                          ↓
+                                              Firestore (ELICITANDO + perguntas)
+                                                          ↓
+                                              onSnapshot → Frontend (cards)
+                                                          ↓
+                                              Usuário responde → pyahu.elicitacao
+                                                          ↓
+                                              Consumer → Gemini (próxima rodada)
+                                                          ↓
+                                              CONCLUIDO → spec + prd + ADRs + tickets (ZIP)
+```
 
 ### Diagrama C4
-```mermaid
-config:
-  theme: mc
-  fontFamily: '''Source Code Pro Variable'', monospace'
----
-C4Container
-    title Diagrama de Containers - Arquitetura Pyahu Scrum
 
-    UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
+```mermaid
+C4Container
+    title Diagrama de Containers — Pyahu Scrum
 
     Person(user, "Gestor / Usuário", "Envia ideias e aprova o escopo")
-    System_Ext(vertex, "Vertex AI", "Gemini 3.5 Flash", "LLM e embeddings")
+    System_Ext(gemini, "Google Gemini", "Gemini 3.6 Flash + text-embedding-004")
 
     System_Boundary(pyahu_scrum, "Sistema Pyahu Scrum") {
-        Container(portfolio, "Portfólio Interativo", "Web", "Gestão e aprovações")
-        Container(worker, "Agent Orchestrator", "Cloud Run", "Coordena agentes e IA")
-        ContainerDb(firestore, "Memória da Aplicação", "Firestore", "Estado, histórico e embeddings")
-        ContainerQueue(pubsub, "Barramento de Eventos", "Pub/Sub + DLQ", "Processamento assíncrono")
-       }
+        Container(frontend, "Pipeline Board", "React/TS + Firebase SDK", "Elicitação / Progresso / Concluídos")
+        Container(api, "Agent Orchestrator", "FastAPI + RabbitMQ Consumer", "Coordena agentes e IA")
+        ContainerDb(firestore, "Firestore", "Google Cloud Firestore", "Estado, histórico e embeddings")
+        ContainerQueue(rabbit, "RabbitMQ", "pyahu.pipeline + pyahu.elicitacao + DLQ", "Processamento assíncrono")
+    }
 
-    Rel_D(user, portfolio, "Acessa", "HTTPS")
-    Rel_D(portfolio, pubsub, "Publica requisição", "REST")
-    Rel_D(worker, firestore, "Lê e grava dados", "SDK")
-    Rel_L(firestore, portfolio, "Atualiza interface", "Tempo real")
-    Rel_R(pubsub, worker, "Dispara pipeline", "Push")
-    Rel_L(worker, pubsub, "Envia falhas", "DLQ")
-    Rel_D(worker, vertex, "Consulta IA", "gRPC")
-    
-    UpdateRelStyle(firestore, portfolio, $offsetX="-95", $offsetY="0")
-    UpdateRelStyle(portfolio, pubsub, $offsetX="-145" $offsetY="0")
-    UpdateRelStyle(worker, firestore, $offsetX="-50", $offsetY="-25")
-    UpdateRelStyle(worker, pubsub, $offsetX="-70", $offsetY="0")
-    UpdateRelStyle(pubsub, worker, $offsetX="10", $offsetY="5")
-    UpdateRelStyle(worker, vertex, $offsetX="10", $offsetY="15")
-
+    Rel_D(user, frontend, "Acessa", "HTTPS")
+    Rel_D(frontend, api, "POST /projects, /respostas", "REST")
+    Rel_D(api, rabbit, "Publica mensagem", "AMQP")
+    Rel_D(rabbit, api, "Consumer consome", "AMQP")
+    Rel_D(api, firestore, "Lê e grava", "SDK")
+    Rel_L(firestore, frontend, "onSnapshot em tempo real", "Firebase SDK")
+    Rel_D(api, gemini, "Elicitação + embeddings", "gRPC")
 ```
 
-### Motor de Recuperação de Histórico (RAG)
+### RAG — Recuperação de Histórico
 
-Para garantir que as novas ADRs e tickets respeitem o histórico do projeto e regras de negócio prévias, o backend utiliza o **Vertex AI Text Embeddings** em conjunto com o **Firestore Vector Search**.
+O backend gera embeddings (`text-embedding-004`) dos projetos concluídos e realiza busca por similaridade de cosseno em Python (sem índice vetorial em homolog, preparado para Firestore Vector Search em produção):
 
-A similaridade entre a nova requisição $q$ e os documentos históricos $d$ é calculada nativamente via aproximação de cosseno:
+$$\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}$$
 
-$$\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}=\frac{\sum_{i=1}^{n}q_id_i}{\sqrt{\sum_{i=1}^{n}q_i^2}\sqrt{\sum_{i=1}^{n}d_i^2}}$$
+O contexto histórico é injetado no prompt de geração de artefatos — cada spec gerada leva em conta projetos anteriores similares.
 
-## 🛠️ Tecnologias Utilizadas
+---
 
-**Inteligência & Core**
+## 🛠️ Stack
 
-* Google GenAI SDK (Python)
-* Vertex AI (Gemini 3.5 Flash & Embeddings)
+| Camada | Tecnologia |
+|---|---|
+| Frontend | React 18 + TypeScript + Firebase SDK |
+| Backend | FastAPI + Python 3.11 |
+| IA | Google Gemini 3.6 Flash + text-embedding-004 |
+| Fila | RabbitMQ (homolog) → Google Cloud Pub/Sub (prod) |
+| Banco | Google Cloud Firestore (real, projeto `pyahu-scrum`) |
+| Infra | Docker + Traefik + Easypanel |
 
-**Infraestrutura & Backend (Google Cloud)**
+---
 
-* Cloud Run (Serverless Worker)
-* Cloud Pub/Sub (Eventos e Dead Letter Queue)
-* Firestore (Banco de Dados de Documentos e Vetorial)
-* Docker & GitHub Actions (CI/CD)
+## 🚀 Como executar localmente
 
-**Frontend**
+### Pré-requisitos
 
-* React / TypeScript (Portfólio Interativo)
+- Docker + Docker Compose
+- Node.js 22+
+- Python 3.11+
+- Conta GCP com projeto Firestore habilitado
 
-## 🚀 Como Executar Localmente
-
-**1. Clone o repositório**
+### 1. Clone o repositório
 
 ```bash
-git clone [https://github.com/edcastanha/PyauScrum.git](https://github.com/edcastanha/PyauScrum.git)
-cd PyauScrum
-
+git clone https://github.com/edcastanha/PyahuScrum.git
+cd PyahuScrum
 ```
 
-**2. Configuração do Backend (Worker)**
+### 2. Backend
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
-pip install -r requirements.txt
-# Configure suas credenciais do GCP no arquivo .env
-python main.py
+cp .env.example .env
+# Edite o .env:
+#   GEMINI_API_KEY=<sua chave>
+#   GOOGLE_CLOUD_PROJECT=pyahu-scrum
+#   GOOGLE_APPLICATION_CREDENTIALS=./pyahu-scrum-sa.json
+# Coloque o service account JSON em backend/pyahu-scrum-sa.json
 
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8001
 ```
 
-**3. Configuração do Frontend**
+> Para desenvolvimento local com emulador Firestore: `export REACT_APP_USE_EMULATOR=true` e `export FIRESTORE_EMULATOR_HOST=localhost:8080`
+
+### 3. Frontend
 
 ```bash
-cd ../frontend
+cd frontend
 npm install
-npm run dev
-
+# Copie as variáveis de ambiente:
+cp .env.example .env.local
+# Edite REACT_APP_AGENT_ORCHESTRATOR_URL=http://localhost:8001
+npm start
 ```
+
+### 4. Stack completa (homolog via Docker)
+
+```bash
+# Pré-requisito: backend/pyahu-scrum-sa.json presente
+git checkout develop && git pull origin develop
+docker compose -f infra/docker-compose.homolog.yml up -d --build
+```
+
+---
+
+## 🔥 Firestore Security Rules
+
+O frontend acessa o Firestore diretamente via Firebase SDK (onSnapshot em tempo real). As rules permitem leitura pública e bloqueiam escrita pelo browser — o backend escreve via Service Account (ignora rules):
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if false;
+      match /elicitacao/{rodada} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+  }
+}
+```
+
+Para publicar as rules via CLI:
+```bash
+GOOGLE_APPLICATION_CREDENTIALS=backend/pyahu-scrum-sa.json \
+  firebase deploy --only firestore:rules --project pyahu-scrum
+```
+
+---
+
+## 🗂️ Pipeline de Elicitação
+
+O pipeline passa por 4 fases visíveis na sidebar:
+
+| Página | Rota | Status do projeto |
+|---|---|---|
+| **Em Elicitação** | `/pipeline/elicitacao` | `TRIAGEM_INICIAL`, `ELICITANDO` |
+| **Em Progresso** | `/pipeline/progresso` | `AGUARDANDO_APROVACAO_ESCOPO`, `GERANDO_ADR` |
+| **Concluídos** | `/pipeline/concluido` | `CONCLUIDO` |
+
+Cada card exibe o histórico de rodadas (1–4). Rodadas respondidas ficam desabilitadas. Na página Concluídos, o botão **⬇ Baixar ZIP** entrega `spec.md + prd.md + ADRs + tickets`.
+
+---
 
 ## 🛡️ Governança e Human-in-the-Loop
 
-O Pyahu Scrum implementa uma política estrita de resiliência. Mudanças de escopo sensíveis detectadas pelo agente pausam a execução e alteram o status no Firestore para `AGUARDANDO_APROVACAO_ESCOPO`. O processamento só é retomado (via Pub/Sub) após a aprovação explícita do usuário no front-end.
+O Pyahu Scrum implementa política estrita de resiliência:
+
+- **Retry automático** — até 3 tentativas por mensagem antes de ir para a DLQ (`pyahu.pipeline.dlq`)
+- **Guard de delete** — consumer verifica se o projeto ainda existe antes de processar mensagens órfãs
+- **HITL** — mudanças de escopo detectadas pelo Gemini pausam o pipeline (`AGUARDANDO_APROVACAO_ESCOPO`) até aprovação explícita do usuário
+
+---
+
+## 📁 Credenciais e Segredos
+
+| Arquivo | Descrição | Gitignored |
+|---|---|---|
+| `backend/.env` | `GEMINI_API_KEY`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_APPLICATION_CREDENTIALS` | ✅ |
+| `backend/pyahu-scrum-sa.json` | Service Account GCP (Firestore + Vertex AI) | ✅ |
+
+**Nunca commitar credenciais.** O `.gitignore` já bloqueia `*.json` sensíveis na pasta `backend/`.
