@@ -14,7 +14,7 @@ interface PipelineStatusModalProps {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  TRIAGEM_INICIAL: 'Na fila',
+  TRIAGEM_INICIAL: 'Na fila — aguardando processamento',
   TRIAGEM_EM_ANDAMENTO: 'Processando',
   ELICITANDO: 'Aguardando suas respostas',
   GERANDO_ADR: 'Gerando documentação',
