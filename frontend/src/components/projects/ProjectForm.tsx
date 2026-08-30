@@ -9,11 +9,9 @@ interface ProjectFormProps {
 }
 
 const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) => {
-  const [formData, setFormData] = useState<Omit<Project, 'id'>>({
+  const [formData, setFormData] = useState<Pick<Project, 'name' | 'description'>>({
     name: '',
     description: '',
-    status: 'inactive',
-    progress: 0,
   });
 
   const modalRef = useRef<HTMLDivElement>(null);
@@ -35,21 +33,21 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) 
       setFormData({
         name: project.name,
         description: project.description,
-        status: project.status,
-        progress: project.progress,
       });
     }
   }, [project]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'progress' ? parseInt(value, 10) : value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newProject: Project = {
-      id: project ? project.id : Date.now(), // Simple ID generation for new projects
+      id: project?.id ?? '',   // '' → projectService.saveProject() gera UUID
       ...formData,
     };
     onSave(newProject);
@@ -66,7 +64,10 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) 
         tabIndex={-1}
       >
         <form onSubmit={handleSubmit}>
-          <h2 id="project-form-title">{project ? 'Editar Projeto' : 'Adicionar Projeto'}</h2>
+          <h2 id="project-form-title">
+            {project ? 'Editar Projeto' : 'Novo Projeto'}
+          </h2>
+
           <div className={styles.formGroup}>
             <label htmlFor="name">Nome do Projeto</label>
             <input
@@ -75,49 +76,31 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) 
               name="name"
               value={formData.name}
               onChange={handleChange}
+              placeholder="Ex.: API de Gerenciamento de Tarefas"
               required
             />
           </div>
+
           <div className={styles.formGroup}>
-            <label htmlFor="description">Descrição</label>
+            <label htmlFor="description">Ideia / Descrição</label>
             <textarea
               id="description"
               name="description"
               rows={4}
               value={formData.description}
               onChange={handleChange}
+              placeholder="Descreva a ideia do projeto. O Agent Orchestrator usará isso como ponto de partida para fazer perguntas e gerar a documentação técnica."
               required
             />
           </div>
-          <div className={styles.formGroup}>
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <option value="inactive">Inativo</option>
-              <option value="active">Ativo</option>
-              <option value="completed">Concluído</option>
-            </select>
-          </div>
-          <div className={styles.formGroup}>
-            <label htmlFor="progress">Progresso (%)</label>
-            <input
-              type="range"
-              id="progress"
-              name="progress"
-              min="0"
-              max="100"
-              value={formData.progress}
-              onChange={handleChange}
-            />
-            <span>{formData.progress}%</span>
-          </div>
+
           <div className={styles.formActions}>
-            <button type="button" onClick={onCancel} className={styles.cancelButton}>Cancelar</button>
-            <button type="submit" className={styles.saveButton}>Salvar</button>
+            <button type="button" onClick={onCancel} className={styles.cancelButton}>
+              Cancelar
+            </button>
+            <button type="submit" className={styles.saveButton}>
+              {project ? 'Salvar' : 'Criar e gerar documentação →'}
+            </button>
           </div>
         </form>
       </div>
