@@ -8,12 +8,15 @@ Spec: specs/004-elicitacao-interativa/spec.md (US-7, US-8, US-9)
 ADR:  docs/adr/006-pipeline-elicitacao-interativa.md
 """
 import json
+import logging
 import os
 import pathlib
 from dataclasses import dataclass, field
 
 from .firestore_client import get_client
 from .status import ProjectStatus
+
+logger = logging.getLogger(__name__)
 
 MAX_RODADAS = 4
 
@@ -336,4 +339,12 @@ class ElicitacaoService:
                 },
             }
         )
+
+        # RAG: salvar embedding da ideia para uso em projetos futuros (falha silenciosa)
+        try:
+            from .rag import RagService
+            RagService().save_embedding(project_id=project_id, idea=idea)
+        except Exception as exc:
+            logger.warning("Falha ao salvar embedding RAG: %s", exc)
+
         return {"status": ProjectStatus.CONCLUIDO.value}
