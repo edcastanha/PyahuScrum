@@ -48,6 +48,36 @@ class VertexAIClient:
         self._project = project or os.environ.get("GOOGLE_CLOUD_PROJECT", "pyahu-scrum-local")
         self._model = model
 
+    def _call_gemini(self, system_instruction: str, prompt: str) -> str:
+        """Chama o Gemini com system instruction + prompt e retorna o texto bruto."""
+        from google import genai
+        from google.genai import errors as genai_errors
+        from google.genai import types as genai_types
+
+        try:
+            client = genai.Client()
+            response = client.models.generate_content(
+                model=self._model,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                ) if system_instruction else None,
+            )
+            return response.text or ""
+        except genai_errors.ClientError as exc:
+            if getattr(exc, "code", None) == 429:
+                raise QuotaExceededError(str(exc)) from exc
+            raise TransientServiceError(str(exc)) from exc
+
+    def gerar_elicitacao(self, system_prompt: str, prompt: str) -> str:
+        """Gera perguntas de elicitação (Rodada N). Retorna JSON bruto do Gemini.
+
+        Formato esperado:
+        {"pronto": false, "perguntas": [{"id": "q1", "texto": "...", "opcoes": [...], "permite_texto": true}]}
+        — ou {"pronto": true, "perguntas": []} quando tem contexto suficiente.
+        """
+        return self._call_gemini(system_instruction=system_prompt, prompt=prompt)
+
     def generate_artifacts(self, idea: str) -> GeneratedArtifacts:
         # Import local: só os testes com fake exercitam este método; evita exigir
         # credencial/config do SDK real em import-time.
