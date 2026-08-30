@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Projetos: leitura pública (frontend onSnapshot) | escrita só pelo backend (SA)
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if false;  // backend usa Service Account — ignora rules
+
+      // Subcoleção elicitacao: leitura pública para histórico de rodadas
+      match /elicitacao/{rodada} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+  }
+}

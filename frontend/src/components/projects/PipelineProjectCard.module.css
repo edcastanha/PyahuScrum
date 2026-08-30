@@ -1,0 +1,127 @@
+.card {
+  background: var(--surface-2, #1e1e2e);
+  border: 1px solid var(--border, #2a2a3e);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.headerLeft { display: flex; align-items: flex-start; gap: 12px; }
+.headerRight { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.toggle { font-size: 1rem; color: var(--text-muted, #888); margin-top: 2px; }
+
+.idea {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  line-height: 1.4;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--surface-3, #2a2a3e);
+  color: var(--text-muted, #aaa);
+}
+
+.roundCount {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+}
+
+.downloadBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent, #7c6af7);
+  color: #fff;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.downloadBtn:hover { background: var(--accent-hover, #6a58e0); }
+
+.body {
+  border-top: 1px solid var(--border, #2a2a3e);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.empty, .aguardando {
+  color: var(--text-muted, #888);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.rodadaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rodadaTitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted, #aaa);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.perguntasList { display: flex; flex-direction: column; gap: 14px; }
+
+.perguntaItem { display: flex; flex-direction: column; gap: 6px; }
+
+.perguntaTexto {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-primary, #ddd);
+}
+
+.opcoesGrid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.opcaoLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: default;
+}
+.opcaoSelecionada {
+  background: rgba(124, 106, 247, 0.2);
+  color: var(--accent, #7c6af7);
+  border: 1px solid var(--accent, #7c6af7);
+}
+.opcaoDesabilitada {
+  background: var(--surface-3, #2a2a3e);
+  color: var(--text-muted, #888);
+  border: 1px solid transparent;
+}
+
+.textareaDesabilitado {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #2a2a3e);
+  background: var(--surface-3, #1a1a2e);
+  color: var(--text-muted, #999);
+  font-size: 0.85rem;
+  resize: none;
+}
