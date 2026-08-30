@@ -4,11 +4,26 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import consumer, dlq_sweeper, firestore_client, messaging, projects
 from .elicitacao import ElicitacaoService, Resposta
 from .firestore_client import get_client
+
+# ── CORS ───────────────────────────────────────────────────────────────────────
+# Origens permitidas: frontend homolog + prod + dev local
+_CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "https://homolog.pyahuscrum.adbfn6.easypanel.host,"
+        "https://pyahuscrum.adbfn6.easypanel.host,"
+        "http://localhost:3000,"
+        "http://localhost:3001",
+    ).split(",")
+    if o.strip()
+]
 
 
 @asynccontextmanager
@@ -27,6 +42,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Pyahu Scrum — Agent Orchestrator", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

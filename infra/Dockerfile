@@ -18,6 +18,9 @@ CMD ["npm", "run", "build"]
 
 # --- Produção: build estático + nginx (Easypanel/Traefik) ---
 FROM base AS build-static
+# ARG injetado no build pelo compose (REACT_APP_* é variável de build do CRA)
+ARG REACT_APP_AGENT_ORCHESTRATOR_URL
+ENV REACT_APP_AGENT_ORCHESTRATOR_URL=${REACT_APP_AGENT_ORCHESTRATOR_URL}
 RUN npm run build
 
 FROM nginx:1.27-alpine AS prod
