@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from . import consumer, dlq_sweeper, firestore_client, messaging, projects
 from .elicitacao import ElicitacaoService, Resposta
+from .firestore_client import get_client
 
 
 @asynccontextmanager
@@ -106,3 +107,43 @@ def enviar_respostas(project_id: str, payload: RespostasRequest, ai_client=None)
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     return resultado
+
+
+@app.get("/projects/{project_id}/download")
+def download_artefatos(project_id: str):
+    """Retorna o ZIP com os artefatos gerados (spec, prd, ADRs, tickets).
+
+    Só disponível quando o projeto está com status CONCLUIDO.
+    """
+    from fastapi.responses import StreamingResponse
+    from .artefatos import GeneratedArtifactsV2, _build_zip, _slugify
+
+    doc = get_client().collection("projects").document(project_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail=f"Projeto {project_id} não encontrado.")
+
+    data = doc.to_dict() or {}
+    if data.get("status") != "CONCLUIDO":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Artefatos ainda não disponíveis — status: {data.get('status')}."
+        )
+
+    raw_artefatos = data.get("artefatos", {})
+    artefatos = GeneratedArtifactsV2(
+        spec=raw_artefatos.get("spec", ""),
+        prd=raw_artefatos.get("prd", ""),
+        adrs=raw_artefatos.get("adrs", []),
+        tickets=raw_artefatos.get("tickets", []),
+    )
+
+    idea = data.get("raw_idea", "projeto")
+    slug = _slugify(idea[:50])  # limitar comprimento do slug
+
+    buf = _build_zip(slug, artefatos)
+
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{slug}.zip"'},
+    )

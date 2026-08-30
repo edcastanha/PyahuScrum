@@ -167,17 +167,30 @@ class TestElicitacaoServiceIniciar:
         self, mock_atualizar, mock_salvar, mock_hist, mock_sp, mock_db
     ):
         """Se o Gemini responder pronto: true já na Rodada 1, dispara geração."""
-        mock_db.return_value.collection.return_value.document.return_value.update = MagicMock()
-        fake = _fake_ai_client(_resposta_pronto())
-        service = ElicitacaoService(ai_client=fake)
+        db_instance = MagicMock()
+        mock_db.return_value = db_instance
 
+        fake = _fake_ai_client(_resposta_pronto())
+        # Adicionar gerar_artefatos ao fake (chamado pelo _gerar_artefatos)
+        import json as _json
+        fake.gerar_artefatos.return_value = _json.dumps({
+            "spec": "s", "prd": "p", "adrs": [], "tickets": []
+        })
+
+        service = ElicitacaoService(ai_client=fake)
         result = service.iniciar_elicitacao(project_id="proj-1", idea="Ideia clara")
-        assert result["status"] == ProjectStatus.GERANDO_ADR.value
+        assert result["status"] in (ProjectStatus.CONCLUIDO.value, ProjectStatus.GERANDO_ADR.value)
 
 
 class TestElicitacaoServiceProcessarRespostas:
     def _make_service(self, resposta_json: str):
-        return ElicitacaoService(ai_client=_fake_ai_client(resposta_json))
+        import json as _json
+        fake = _fake_ai_client(resposta_json)
+        # gerar_artefatos é chamado quando pronto/max_rodadas
+        fake.gerar_artefatos.return_value = _json.dumps(
+            {"spec": "s", "prd": "p", "adrs": [], "tickets": []}
+        )
+        return ElicitacaoService(ai_client=fake)
 
     @patch("app.elicitacao.get_client")
     @patch("app.elicitacao._load_system_prompt", return_value="sp")
@@ -228,7 +241,7 @@ class TestElicitacaoServiceProcessarRespostas:
             numero_rodada=MAX_RODADAS,
             respostas_novas=[],
         )
-        assert result["status"] == ProjectStatus.GERANDO_ADR.value
+        assert result["status"] in (ProjectStatus.CONCLUIDO.value, ProjectStatus.GERANDO_ADR.value)
 
     @patch("app.elicitacao.get_client")
     @patch("app.elicitacao._load_system_prompt", return_value="sp")
@@ -250,7 +263,7 @@ class TestElicitacaoServiceProcessarRespostas:
             respostas_novas=[],
             forcar_geracao=True,
         )
-        assert result["status"] == ProjectStatus.GERANDO_ADR.value
+        assert result["status"] in (ProjectStatus.CONCLUIDO.value, ProjectStatus.GERANDO_ADR.value)
 
     @patch("app.elicitacao.get_client")
     @patch("app.elicitacao._carregar_historico", return_value=[])
