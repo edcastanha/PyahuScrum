@@ -64,7 +64,7 @@ const Sidebar: React.FC = () => {
       </div>
       <nav className={styles.navigation}>
         <p className={styles.navHeader}>NAVEGAÇÃO</p>
-        <NavLink to="/" className={({ isActive }) => isActive ? styles.active : ''}>
+        <NavLink to="/dashboard" className={({ isActive }) => isActive ? styles.active : ''}>
           <Gauge /> Visão geral dos projetos
         </NavLink>
         <NavLink to="/projects" className={({ isActive }) => isActive ? styles.active : ''}>
