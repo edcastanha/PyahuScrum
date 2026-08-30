@@ -41,12 +41,20 @@ Responda em JSON, sem markdown ao redor, no formato exato:
 
 
 class VertexAIClient:
-    """Wrapper fino em volta do Vertex AI SDK (Gemini). Não coberto por teste automatizado
-    nesta fase: depende de credenciais reais do projeto GCP (ticket 02)."""
+    """Wrapper fino em volta do Vertex AI SDK (Gemini).
+
+    Suporta dois modos de autenticação (detectado automaticamente):
+    - GEMINI_API_KEY (ou GOOGLE_API_KEY) → Gemini Developer API (mais simples, sem GCP)
+    - Application Default Credentials → Vertex AI (via gcloud / service account)
+    """
 
     def __init__(self, project: str | None = None, model: str = "gemini-2.5-flash"):
         self._project = project or os.environ.get("GOOGLE_CLOUD_PROJECT", "pyahu-scrum-local")
         self._model = model
+        # Normalizar: GEMINI_API_KEY → GOOGLE_API_KEY (exigido pelo SDK)
+        _gemini_key = os.environ.get("GEMINI_API_KEY")
+        if _gemini_key and not os.environ.get("GOOGLE_API_KEY"):
+            os.environ["GOOGLE_API_KEY"] = _gemini_key
 
     def _call_gemini(self, system_instruction: str, prompt: str) -> str:
         """Chama o Gemini com system instruction + prompt e retorna o texto bruto."""
