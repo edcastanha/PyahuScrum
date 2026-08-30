@@ -6,7 +6,7 @@ import PipelineStatusModal from '../../components/projects/PipelineStatusModal';
 import { Project } from '../../entities/Project';
 import { projectService } from '../../services/project/projectService';
 import { activityService } from '../../services/activity/activityService';
-import { createPipelineRequest, deriveIdeaFromProject } from '../../services/pipeline/pipelineService';
+import { createPipelineRequest, deriveIdeaFromProject, deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
 import { useToast } from '../../context/ToastContext';
 
 const ProjectsPage: React.FC = () => {
@@ -58,13 +58,16 @@ const ProjectsPage: React.FC = () => {
         showToast('success', `Projeto "${savedProject.name}" criado! Gerando documentação...`);
         window.dispatchEvent(new CustomEvent('projectsUpdated', { detail: { projects: updated } }));
 
-        // Aciona o Agent Orchestrator (não bloqueia nem desfaz a criação se falhar)
-        try {
-          const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject));
-          setPipelineProjectId(pipelineRequest.id);
-        } catch (pipelineError) {
-          console.error('Erro ao acionar o Agent Orchestrator:', pipelineError);
-          showToast('error', 'Projeto salvo, mas não foi possível acionar a geração automática de artefatos.');
+        // Novo projeto: disparar pipeline assíncrono e abrir modal imediatamente
+        if (!selectedProject) {
+          try {
+            const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject));
+            // O modal abre com TRIAGEM_INICIAL e evolui via onSnapshot
+            setPipelineProjectId(pipelineRequest.id);
+          } catch (pipelineError) {
+            console.error('Erro ao acionar o Agent Orchestrator:', pipelineError);
+            showToast('error', 'Projeto salvo, mas não foi possível acionar a geração automática de artefatos.');
+          }
         }
       }
 
@@ -78,10 +81,15 @@ const ProjectsPage: React.FC = () => {
   const handleCancel = () => setIsFormOpen(false);
 
   const handleDeleteProject = (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este projeto?')) return;
+    if (!window.confirm('Tem certeza que deseja excluir este projeto? Todos os artefatos gerados serão removidos.')) return;
     const projectToDelete = projects.find(p => p.id === id);
     if (!projectToDelete) return;
     try {
+      // Delete cascade no backend (Firestore + subcoleções)
+      deleteProjectFromPipeline(id).catch(err =>
+        console.warn('Falha ao remover projeto no backend (cascade):', err),
+      );
+      // Delete local
       projectService.deleteProject(id);
       const updated = projects.filter(p => p.id !== id);
       setProjects(updated);
