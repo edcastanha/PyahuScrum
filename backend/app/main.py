@@ -15,7 +15,7 @@ from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from . import consumer, dlq_sweeper, firestore_client, messaging, projects
+from . import consumer, firestore_client, messaging, projects
 from .firestore_client import get_client
 
 _CORS_ORIGINS = [
@@ -41,7 +41,6 @@ async def lifespan(app: FastAPI):
 
     if os.environ.get("START_CONSUMER", "false").lower() == "true":
         threading.Thread(target=consumer.start_consuming, daemon=True).start()
-        threading.Thread(target=dlq_sweeper.start_sweeping, daemon=True).start()
 
     yield
 
