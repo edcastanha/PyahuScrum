@@ -70,12 +70,11 @@ class VertexAIClient:
             raise TransientServiceError(str(exc)) from exc
 
     def gerar_elicitacao(self, system_prompt: str, prompt: str) -> str:
-        """Gera perguntas de elicitação (Rodada N). Retorna JSON bruto do Gemini.
+        """Gera perguntas de elicitação (Rodada N). Retorna JSON bruto do Gemini."""
+        return self._call_gemini(system_instruction=system_prompt, prompt=prompt)
 
-        Formato esperado:
-        {"pronto": false, "perguntas": [{"id": "q1", "texto": "...", "opcoes": [...], "permite_texto": true}]}
-        — ou {"pronto": true, "perguntas": []} quando tem contexto suficiente.
-        """
+    def gerar_artefatos(self, system_prompt: str, prompt: str) -> str:
+        """Gera os artefatos finais (spec, prd, adrs, tickets). Retorna JSON bruto do Gemini."""
         return self._call_gemini(system_instruction=system_prompt, prompt=prompt)
 
     def generate_artifacts(self, idea: str) -> GeneratedArtifacts:
