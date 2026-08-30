@@ -9,9 +9,6 @@ import './App.css';
 const LoginPage        = lazy(() => import('./pages/auth/LoginPage'));
 const DashboardPage    = lazy(() => import('./pages/dashboard/DashboardPage'));
 const ProjectsPage     = lazy(() => import('./pages/projects/ProjectsPage'));
-// UserStoriesPage e DocumentationPage saíram da navegação (ticket 09, Fatia 2)
-// -- fora de escopo do MVP atual, focado no Agent Orchestrator. Código intacto
-// em pages/user-stories e pages/documentation, só desconectado do roteamento.
 
 function App() {
   return (
@@ -41,7 +38,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
         </Router>

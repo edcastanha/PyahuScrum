@@ -34,6 +34,8 @@
   border-radius: 8px;
   width: 90%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   color: var(--clr-ink);
   animation: modalSlideIn 0.25s var(--ease-quint) both;
@@ -71,7 +73,14 @@
   background-color: var(--clr-surface);
   color: var(--clr-ink);
   font-size: 1rem;
+  box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 100px;
+  max-height: 200px;
 }
 
 .formGroup input[type="text"]:focus,
