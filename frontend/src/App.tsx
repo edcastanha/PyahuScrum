@@ -6,9 +6,10 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './router/ProtectedRoute';
 import './App.css';
 
-const LoginPage        = lazy(() => import('./pages/auth/LoginPage'));
-const DashboardPage    = lazy(() => import('./pages/dashboard/DashboardPage'));
-const ProjectsPage     = lazy(() => import('./pages/projects/ProjectsPage'));
+const LoginPage           = lazy(() => import('./pages/auth/LoginPage'));
+const DashboardPage       = lazy(() => import('./pages/dashboard/DashboardPage'));
+const ProjectsPage        = lazy(() => import('./pages/projects/ProjectsPage'));
+const UserStoriesPage     = lazy(() => import('./pages/user-stories/UserStoriesPage'));
 
 function App() {
   return (
@@ -34,6 +35,26 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <ProjectsPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/user-stories"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <UserStoriesPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/user-stories/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <UserStoriesPage />
                     </MainLayout>
                   </ProtectedRoute>
                 }
