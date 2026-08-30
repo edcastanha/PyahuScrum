@@ -51,7 +51,7 @@ const DashboardPage: React.FC = () => {
   }, [loadData, showToast]);
 
   const activeProjects = useMemo(
-    () => projects.filter(p => p.status === 'active'),
+    () => projects,   // status removido da entidade (E3-T10): todos os projetos são exibidos
     [projects]
   );
 
