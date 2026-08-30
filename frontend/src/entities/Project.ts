@@ -1,7 +1,8 @@
 export interface Project {
-  id: number;
+  id: string;
   name: string;
   description: string;
-  status: 'active' | 'inactive' | 'completed';
-  progress: number; // 0 to 100
+  // status e progress removidos (E3-T10 / ticket #27):
+  // o status passa a ser derivado do pipeline (ProjectStatus no Firestore)
+  // e não é mais um campo manual do projeto.
 }
