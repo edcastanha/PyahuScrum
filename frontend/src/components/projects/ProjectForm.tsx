@@ -83,6 +83,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, onSave, onCancel }) 
             <textarea
               id="description"
               name="description"
+              rows={4}
               value={formData.description}
               onChange={handleChange}
               required
