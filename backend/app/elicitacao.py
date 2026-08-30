@@ -303,14 +303,37 @@ class ElicitacaoService:
         }
 
     def _gerar_artefatos(self, project_id: str, idea: str, historico: list[RodadaElicitacao]) -> dict:
-        """Delega a geração dos artefatos (implementado em E3-T12)."""
-        # Stub: E3-T12 implementará a geração real.
-        # Por ora: atualiza status para sinalizar que a geração foi disparada.
+        """Gera os artefatos finais e persiste no Firestore com status CONCLUIDO."""
+        from .artefatos import GeneratedArtifactsV2, generate_artifacts_from_history
+        from .ai_client import InvalidResponseError
+
         db = get_client()
         db.collection("projects").document(project_id).update(
             {"status": ProjectStatus.GERANDO_ADR.value}
         )
-        return {
-            "status": ProjectStatus.GERANDO_ADR.value,
-            "mensagem": "Geração de artefatos iniciada (E3-T12).",
-        }
+
+        try:
+            artefatos = generate_artifacts_from_history(
+                idea=idea,
+                historico=historico,
+                ai_client=self._get_client(),
+            )
+        except InvalidResponseError:
+            db.collection("projects").document(project_id).update(
+                {"status": ProjectStatus.FALHA_PROCESSAMENTO.value,
+                 "failure_reason": "RESPOSTA_INVALIDA"}
+            )
+            return {"status": ProjectStatus.FALHA_PROCESSAMENTO.value}
+
+        db.collection("projects").document(project_id).update(
+            {
+                "status": ProjectStatus.CONCLUIDO.value,
+                "artefatos": {
+                    "spec": artefatos.spec,
+                    "prd": artefatos.prd,
+                    "adrs": artefatos.adrs,
+                    "tickets": artefatos.tickets,
+                },
+            }
+        )
+        return {"status": ProjectStatus.CONCLUIDO.value}
