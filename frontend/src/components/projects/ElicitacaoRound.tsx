@@ -7,6 +7,13 @@ interface RespostaMap {
   [pergunta_id: string]: { opcao?: string; texto?: string };
 }
 
+/** Snapshot imutável das respostas no momento do envio. */
+interface RespostaSnapshot {
+  pergunta_id: string;
+  opcao?: string;
+  texto?: string;
+}
+
 interface ElicitacaoRoundProps {
   perguntas: PerguntaElicitacao[];
   rodada: number;
@@ -24,6 +31,10 @@ const ElicitacaoRound: React.FC<ElicitacaoRoundProps> = ({
 }) => {
   const [respostas, setRespostas] = useState<RespostaMap>({});
   const [enviando, setEnviando] = useState(false);
+  /** true após envio bem-sucedido — congela a UI até Firestore confirmar */
+  const [enviado, setEnviado] = useState(false);
+  /** Snapshot das respostas para exibir no modo somente-leitura pós-envio */
+  const [snapshotRespostas, setSnapshotRespostas] = useState<RespostaSnapshot[]>([]);
 
   const handleResposta = useCallback((pergunta_id: string, opcao?: string, texto?: string) => {
     setRespostas(prev => ({
@@ -54,8 +65,20 @@ const ElicitacaoRound: React.FC<ElicitacaoRoundProps> = ({
         opcao: respostas[p.id]?.opcao ?? null,
         texto: respostas[p.id]?.texto ?? null,
       }));
+
+      // Captura snapshot antes de enviar para exibição no modo leitura
+      const snapshot: RespostaSnapshot[] = perguntas.map(p => ({
+        pergunta_id: p.id,
+        opcao: respostas[p.id]?.opcao,
+        texto: respostas[p.id]?.texto,
+      }));
+
       // 202 Accepted — o onSnapshot notificará quando o backend processar
       await sendRoundAnswers(projectId, rodada, respostasPayload, forcarGeracao);
+
+      // Congela a UI localmente — não espera o Firestore
+      setSnapshotRespostas(snapshot);
+      setEnviado(true);
       onEnviado({ status: 'PROCESSANDO' });
     } catch (err) {
       console.error('Erro ao enviar respostas:', err);
@@ -64,6 +87,47 @@ const ElicitacaoRound: React.FC<ElicitacaoRoundProps> = ({
     }
   }, [rodada, perguntas, respostas, projectId, onEnviado]);
 
+  // ── Modo somente-leitura pós-envio ──────────────────────────────────────────
+  if (enviado) {
+    return (
+      <div className={styles.round}>
+        <div className={styles.enviado}>
+          {perguntas.map(p => {
+            const snap = snapshotRespostas.find(s => s.pergunta_id === p.id);
+            return (
+              <div key={p.id} className={styles.enviandoPergunta}>
+                <p className={styles.enviandoTexto}>{p.texto}</p>
+
+                {p.opcoes.length > 0 && (
+                  <div className={styles.enviandoOpcoes}>
+                    {p.opcoes.map(op => (
+                      <span
+                        key={op}
+                        className={`${styles.enviandoOpcao} ${snap?.opcao === op ? styles.enviandoOpcaoSel : styles.enviandoOpcaoNao}`}
+                      >
+                        {snap?.opcao === op ? '● ' : '○ '}{op}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {p.permite_texto && snap?.texto && (
+                  <p className={styles.enviandoTextoLivre}>{snap.texto}</p>
+                )}
+              </div>
+            );
+          })}
+
+          <div className={styles.aguardandoMsg}>
+            <span className={styles.spinnerSmall} />
+            Aguardando próxima rodada…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Modo editável (rodada ativa) ────────────────────────────────────────────
   return (
     <div className={styles.round}>
       <p className={styles.cabecalho}>

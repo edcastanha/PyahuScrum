@@ -57,3 +57,86 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ── Estado pós-envio: somente leitura + aguardando Firestore ─────────────── */
+
+.enviado {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--surface-3, #1a1a2a);
+  border: 1px solid var(--border, #2a2a3e);
+  opacity: 0.85;
+}
+
+.enviandoPergunta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.enviandoTexto {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #aaa);
+}
+
+.enviandoOpcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.enviandoOpcao {
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.enviandoOpcaoSel {
+  background: rgba(124, 106, 247, 0.15);
+  color: var(--accent, #7c6af7);
+  border: 1px solid rgba(124, 106, 247, 0.4);
+}
+
+.enviandoOpcaoNao {
+  background: var(--surface-3, #2a2a3e);
+  color: var(--text-muted, #666);
+  border: 1px solid transparent;
+}
+
+.enviandoTextoLivre {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #999);
+  font-style: italic;
+  padding: 4px 8px;
+  border-left: 2px solid var(--border, #2a2a3e);
+}
+
+.aguardandoMsg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.spinnerSmall {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(124, 106, 247, 0.2);
+  border-top-color: var(--accent, #7c6af7);
+  border-radius: 50%;
+  animation: spinSmall 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spinSmall {
+  to { transform: rotate(360deg); }
+}

@@ -52,6 +52,17 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
   const rodadaAtiva = rodadas.find(r => !r.respondida);
   const todasRespondidas = rodadas.length > 0 && rodadas.every(r => r.respondida);
 
+  /** Callback real: o ElicitacaoRound já congela a UI localmente após envio.
+   *  Mantemos o handler aqui para extensibilidade futura (ex: analytics, toast). */
+  const handleRodadaEnviada = useCallback(
+    (_resultado: { status: string; pronto?: boolean }) => {
+      // ElicitacaoRound já gerencia o estado local de freeze.
+      // Nada adicional necessário por enquanto — o onSnapshot do Firestore
+      // irá desmontá-lo e exibi-lo no histórico assim que respondida=true.
+    },
+    [],
+  );
+
   return (
     <div className={`${styles.card} ${deletando ? styles.cardDeletando : ''}`}>
       <div className={styles.header} onClick={() => setExpandido(e => !e)}>
@@ -86,10 +97,10 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
             <p className={styles.empty}>Aguardando início da elicitação…</p>
           )}
 
-          {/* Rodadas já respondidas — somente leitura */}
+          {/* Rodadas já respondidas — somente leitura (confirmado pelo Firestore) */}
           {rodadas.filter(r => r.respondida).map(rodada => (
             <div key={rodada.numero} className={styles.rodadaBlock}>
-              <h4 className={styles.rodadaTitle}>Rodada {rodada.numero} — respondida</h4>
+              <h4 className={styles.rodadaTitle}>Rodada {rodada.numero} — respondida ✓</h4>
               <div className={styles.perguntasList}>
                 {rodada.perguntas.map(p => {
                   const resp = rodada.respostas.find(r => r.pergunta_id === p.id);
@@ -120,7 +131,7 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
             </div>
           ))}
 
-          {/* Rodada ativa — editável */}
+          {/* Rodada ativa — editável; congela localmente após envio */}
           {rodadaAtiva && !todasRespondidas && (
             <div className={styles.rodadaBlock}>
               <h4 className={styles.rodadaTitle}>Rodada {rodadaAtiva.numero} — responda abaixo</h4>
@@ -129,7 +140,7 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
                 rodada={rodadaAtiva.numero}
                 projectId={projectId}
                 pronto={false}
-                onEnviado={() => {}}
+                onEnviado={handleRodadaEnviada}
               />
             </div>
           )}
