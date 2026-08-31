@@ -163,23 +163,32 @@ class TestElicitacaoServiceIniciar:
     @patch("app.elicitacao._carregar_historico", return_value=[])
     @patch("app.elicitacao._salvar_rodada")
     @patch("app.elicitacao._atualizar_status_projeto")
-    def test_pronto_na_rodada_1_dispara_geracao(
+    def test_pronto_na_rodada_1_dispara_resumo_escopo(
         self, mock_atualizar, mock_salvar, mock_hist, mock_sp, mock_db
     ):
-        """Se o Gemini responder pronto: true já na Rodada 1, dispara geração."""
+        """Se pronto: true na Rodada 1, deve ir para AGUARDANDO_APROVACAO_ESCOPO (HITL)."""
         db_instance = MagicMock()
+        doc_mock = MagicMock()
+        doc_mock.exists = True
+        doc_mock.to_dict.return_value = {"raw_idea": "Ideia clara"}
+        db_instance.collection.return_value.document.return_value.get.return_value = doc_mock
         mock_db.return_value = db_instance
 
-        fake = _fake_ai_client(_resposta_pronto())
-        # Adicionar gerar_artefatos ao fake (chamado pelo _gerar_artefatos)
         import json as _json
-        fake.gerar_artefatos.return_value = _json.dumps({
-            "spec": "s", "prd": "p", "adrs": [], "tickets": []
+        # fake retorna pronto: true na elicitação E resumo de escopo no gerar_resumo
+        resposta_elicit = _json.dumps({"pronto": True, "perguntas": []})
+        resposta_resumo = _json.dumps({
+            "precisa_mais_info": False,
+            "perguntas_adicionais": [],
+            "resumo_markdown": "## Ideia resumida\nApp de lista de compras."
         })
+        fake = MagicMock()
+        fake.gerar_elicitacao.side_effect = [resposta_elicit, resposta_resumo]
 
         service = ElicitacaoService(ai_client=fake)
         result = service.iniciar_elicitacao(project_id="proj-1", idea="Ideia clara")
-        assert result["status"] in (ProjectStatus.CONCLUIDO.value, ProjectStatus.GERANDO_ADR.value)
+        # Com HITL: pronto → gera resumo → AGUARDANDO_APROVACAO_ESCOPO
+        assert result["status"] == ProjectStatus.AGUARDANDO_APROVACAO_ESCOPO.value
 
 
 class TestElicitacaoServiceProcessarRespostas:
