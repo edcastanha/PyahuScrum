@@ -7,6 +7,7 @@ import ProtectedRoute from './router/ProtectedRoute';
 import './App.css';
 
 const LoginPage           = lazy(() => import('./pages/auth/LoginPage'));
+const LandingPage         = lazy(() => import('./pages/LandingPage'));
 const DashboardPage       = lazy(() => import('./pages/dashboard/DashboardPage'));
 const ProjectsPage        = lazy(() => import('./pages/projects/ProjectsPage'));
 const ElicitacaoPage      = lazy(() => import('./pages/pipeline/ElicitacaoPage'));
@@ -20,7 +21,8 @@ function App() {
         <Router>
           <Suspense fallback={null}>
             <Routes>
-              <Route path="/" element={<LoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route
                 path="/dashboard"
                 element={
@@ -71,7 +73,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </Router>
