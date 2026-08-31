@@ -208,7 +208,17 @@ def _make_callback(queue_name: str):
 
 
 def start_consuming() -> None:
-    """Inicia o consumo das duas filas em threads separadas via basic_consume."""
+    """Inicia o consumo das filas — delega ao backend configurado."""
+    from . import messaging
+
+    if messaging.get_backend() == "pubsub":
+        _start_consuming_pubsub()
+    else:
+        _start_consuming_rabbitmq()
+
+
+def _start_consuming_rabbitmq() -> None:
+    """Loop de consumo RabbitMQ — homologação (MESSAGING_BACKEND=rabbitmq)."""
     import threading
 
     def _consume(queue_name: str) -> None:
@@ -221,7 +231,7 @@ def start_consuming() -> None:
                     queue=queue_name,
                     on_message_callback=_make_callback(queue_name),
                 )
-                logger.info("Consumer iniciado: fila '%s'", queue_name)
+                logger.info("Consumer RabbitMQ iniciado: fila '%s'", queue_name)
                 channel.start_consuming()
             except Exception as exc:
                 logger.error("Consumer [%s] caiu: %s — reconectando...", queue_name, exc)
@@ -230,3 +240,30 @@ def start_consuming() -> None:
 
     for q in (messaging.QUEUE_PIPELINE, messaging.QUEUE_ELICITACAO):
         threading.Thread(target=_consume, args=(q,), daemon=True).start()
+
+
+def _start_consuming_pubsub() -> None:
+    """Loop de consumo Pub/Sub — produção GCP (MESSAGING_BACKEND=pubsub)."""
+    from .messaging_pubsub import start_consuming as pubsub_start
+
+    def _handle_pipeline(body: dict) -> bool:
+        project_id = body.get("project_id", "")
+        idea = body.get("idea", "")
+        return handle_nova_elicitacao(project_id=project_id, idea=idea)
+
+    def _handle_elicitacao(body: dict) -> bool:
+        project_id = body.get("project_id", "")
+        tipo = body.get("tipo", "resposta")
+        if tipo == "aprovar":
+            return handle_aprovar(project_id=project_id)
+        if tipo == "revisao":
+            return handle_revisao(project_id=project_id, feedback=body.get("feedback", ""))
+        return handle_resposta(
+            project_id=project_id,
+            numero_rodada=body.get("rodada", 1),
+            respostas=body.get("respostas", []),
+            forcar_geracao=body.get("forcar_geracao", False),
+        )
+
+    pubsub_start(handlers={"pipeline": _handle_pipeline, "elicitacao": _handle_elicitacao})
+    logger.info("Consumer Pub/Sub iniciado.")

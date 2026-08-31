@@ -27,6 +27,18 @@
   color: var(--clr-ink);
 }
 
+.pipelineTag {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(124, 106, 247, 0.12);
+  color: #a78bfa;
+  border: 1px solid rgba(124, 106, 247, 0.3);
+  font-weight: 600;
+}
+
 .headerActions {
   display: flex;
   align-items: center;

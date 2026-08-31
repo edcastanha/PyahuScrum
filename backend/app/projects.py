@@ -7,14 +7,17 @@ from .status import ProjectStatus
 logger = logging.getLogger(__name__)
 
 
-def create_project(idea: str) -> dict:
+def create_project(idea: str, github_login: str | None = None) -> dict:
     """Cria o documento do projeto com status TRIAGEM_INICIAL.
 
     Não chama o Gemini — apenas persiste e retorna o ID.
     O chamador é responsável por publicar na fila (fluxo assíncrono).
     """
     doc_ref = get_client().collection("projects").document()
-    doc_ref.set({"raw_idea": idea, "status": ProjectStatus.TRIAGEM_INICIAL.value})
+    payload: dict = {"raw_idea": idea, "status": ProjectStatus.TRIAGEM_INICIAL.value}
+    if github_login:
+        payload["github_login"] = github_login
+    doc_ref.set(payload)
     return {"id": doc_ref.id, "status": ProjectStatus.TRIAGEM_INICIAL.value}
 
 

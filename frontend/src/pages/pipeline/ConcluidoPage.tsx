@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectListItem, subscribeToProjectsByStatus } from '../../services/pipeline/projectStatusListener';
 import PipelineProjectCard from '../../components/projects/PipelineProjectCard';
+import { useAuth } from '../../context/AuthContext';
 import styles from './PipelinePage.module.css';
 
 /**
@@ -9,11 +10,12 @@ import styles from './PipelinePage.module.css';
  */
 const ConcluidoPage: React.FC = () => {
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const { githubLogin } = useAuth();
 
   useEffect(() => {
-    const unsub = subscribeToProjectsByStatus(['CONCLUIDO'], setProjects);
+    const unsub = subscribeToProjectsByStatus(['CONCLUIDO'], setProjects, githubLogin);
     return unsub;
-  }, []);
+  }, [githubLogin]);
 
   return (
     <div className={styles.page}>

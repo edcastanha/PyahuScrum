@@ -26,7 +26,7 @@ export interface PipelineStatusUpdate {
   }>;
   rodada_atual?: number;
   pronto?: boolean;
-  resumo_escopo?: string;       // gerado pelo Gemini em AGUARDANDO_APROVACAO_ESCOPO
+  resumo_escopo?: string;
   artefatos?: {
     spec?: string;
     prd?: string;
@@ -86,13 +86,39 @@ export function subscribeToProjectStatus(
   });
 }
 
-/** Assina a coleção de projetos filtrada por status. */
+/** Assina a coleção de projetos filtrada por status e opcionalmente por dono. */
 export function subscribeToProjectsByStatus(
   statuses: string[],
   onUpdate: (projects: ProjectListItem[]) => void,
+  githubLogin?: string | null,
 ): () => void {
   const db = getFirestoreClient();
-  const q = query(collection(db, 'projects'), where('status', 'in', statuses));
+  const constraints: Parameters<typeof query>[1][] = [where('status', 'in', statuses)];
+  if (githubLogin) {
+    constraints.push(where('github_login', '==', githubLogin));
+  }
+  const q = query(collection(db, 'projects'), ...constraints);
+  return onSnapshot(q, snap => {
+    const list: ProjectListItem[] = snap.docs.map(d => ({
+      id: d.id,
+      raw_idea: (d.data()['raw_idea'] as string) || '(sem descrição)',
+      status: (d.data()['status'] as string) || '',
+    }));
+    onUpdate(list);
+  });
+}
+
+/** Assina TODOS os projetos de um owner (qualquer status) via Firestore onSnapshot.
+ *  Fonte de verdade para a ProjectsPage — elimina dependência do localStorage. */
+export function subscribeToAllProjectsByOwner(
+  githubLogin: string,
+  onUpdate: (projects: ProjectListItem[]) => void,
+): () => void {
+  const db = getFirestoreClient();
+  const q = query(
+    collection(db, 'projects'),
+    where('github_login', '==', githubLogin),
+  );
   return onSnapshot(q, snap => {
     const list: ProjectListItem[] = snap.docs.map(d => ({
       id: d.id,

@@ -9,14 +9,24 @@ interface ProjectListItemProps {
 }
 
 const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onEdit, onDelete }) => {
+  /** Projeto ainda não enviado ao pipeline — edição liberada */
+  const noPipeline = !project.pipelineId;
+
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <h3>{project.name}</h3>
+        <div>
+          <h3>{project.name}</h3>
+          {!noPipeline && (
+            <span className={styles.pipelineTag}>🚀 No pipeline</span>
+          )}
+        </div>
         <div className={styles.buttonGroup}>
-          <button onClick={() => onEdit(project)} className={styles.editButton}>
-            Editar
-          </button>
+          {noPipeline && (
+            <button onClick={() => onEdit(project)} className={styles.editButton}>
+              Editar
+            </button>
+          )}
           {onDelete && (
             <button
               onClick={() => onDelete(project.id)}
