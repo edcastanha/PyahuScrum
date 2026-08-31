@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { ProjectListItem, subscribeToProjectsByStatus, subscribeToProjectStatus } from '../../services/pipeline/projectStatusListener';
+import { deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
 import { AGENT_ORCHESTRATOR_BASE_URL } from '../../config/api';
 import styles from './ProgressoPage.module.css';
 
@@ -96,6 +97,7 @@ const AprovacaoCard: React.FC<AprovacaoCardProps> = ({ project }) => {
   const [expandido, setExpandido] = useState(true);
   const [aprovando, setAprovando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
+  const [deletando, setDeletando] = useState(false);
 
   // onSnapshot do documento para pegar resumo_escopo e status em tempo real
   useEffect(() => {
@@ -117,6 +119,14 @@ const AprovacaoCard: React.FC<AprovacaoCardProps> = ({ project }) => {
     // status será atualizado via onSnapshot
   }, [project.id]);
 
+  const handleDelete = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Excluir este projeto? Todos os artefatos e histórico serão removidos permanentemente.')) return;
+    setDeletando(true);
+    try { await deleteProjectFromPipeline(project.id); }
+    catch (err) { console.error('Erro ao excluir:', err); setDeletando(false); }
+  }, [project.id]);
+
   const estaGerandoAdr = status === 'GERANDO_ADR';
 
   return (
@@ -127,7 +137,26 @@ const AprovacaoCard: React.FC<AprovacaoCardProps> = ({ project }) => {
             <p className={styles.cardIdeia}>{project.raw_idea}</p>
             <span className={styles.statusBadge}>{STATUS_LABEL[status] ?? status}</span>
           </div>
-          <span className={styles.toggle}>{expandido ? '▾' : '▸'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className={styles.toggle}>{expandido ? '▾' : '▸'}</span>
+            <button
+              onClick={handleDelete}
+              disabled={deletando || estaGerandoAdr}
+              title="Excluir projeto"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(248,113,113,0.3)',
+                color: '#f87171',
+                borderRadius: '6px',
+                padding: '4px 9px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                opacity: deletando ? 0.5 : 1,
+              }}
+            >
+              {deletando ? '⏳' : '🗑'}
+            </button>
+          </div>
         </div>
 
         {expandido && (
