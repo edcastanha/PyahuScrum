@@ -12,7 +12,7 @@ Este projeto democratiza a engenharia de decisão: captura ideias brutas de neg�
 |---|---|
 | **Homologação** (develop) | https://homolog.pyahuscrum.adbfn6.easypanel.host |
 | **API** | https://api-homolog.pyahuscrum.adbfn6.easypanel.host |
-| **GCP Project** | `pyahu-scrum` (ID: 365029905997) |
+| **GCP Project** | `pyahu-scrum` |
 | **Firestore** | [console.firebase.google.com/project/pyahu-scrum/firestore](https://console.firebase.google.com/project/pyahu-scrum/firestore) |
 
 ---

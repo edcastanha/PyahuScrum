@@ -4,7 +4,16 @@ name: pyahu-scrum-homolog
 # Frontend:  https://homolog.pyahuscrum.adbfn6.easypanel.host
 # API:       https://api-homolog.pyahuscrum.adbfn6.easypanel.host
 #
-# Pré-requisito: backend/.env com GEMINI_API_KEY e GOOGLE_APPLICATION_CREDENTIALS
+# Pré-requisito:
+#   1. backend/.env com GEMINI_API_KEY e GOOGLE_APPLICATION_CREDENTIALS
+#   2. backend/pyahu-scrum-sa.json (Service Account GCP)
+#   3. infra/.env.homolog com as variáveis do Firebase (ver infra/.env.homolog.example)
+#
+# Uso:
+#   cp infra/.env.homolog.example infra/.env.homolog
+#   # preencher infra/.env.homolog com os valores reais
+#   git checkout develop && git pull origin develop
+#   docker compose -f infra/docker-compose.homolog.yml up -d --build
 
 services:
 
@@ -15,14 +24,13 @@ services:
       dockerfile: infra/Dockerfile
       target: prod
       args:
-        REACT_APP_AGENT_ORCHESTRATOR_URL: https://api-homolog.pyahuscrum.adbfn6.easypanel.host
-        # Firebase real — projeto pyahu-scrum
-        REACT_APP_FIREBASE_API_KEY: AIzaSyAs0bH4VYB6CayvqrMfTEZjNv9AYt99Uro
-        REACT_APP_FIREBASE_AUTH_DOMAIN: pyahu-scrum.firebaseapp.com
-        REACT_APP_FIREBASE_PROJECT_ID: pyahu-scrum
-        REACT_APP_FIREBASE_STORAGE_BUCKET: pyahu-scrum.firebasestorage.app
-        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: "365029905997"
-        REACT_APP_FIREBASE_APP_ID: "1:365029905997:web:ae14e549e67127fc82ae04"
+        REACT_APP_AGENT_ORCHESTRATOR_URL: ${REACT_APP_AGENT_ORCHESTRATOR_URL}
+        REACT_APP_FIREBASE_API_KEY: ${REACT_APP_FIREBASE_API_KEY}
+        REACT_APP_FIREBASE_AUTH_DOMAIN: ${REACT_APP_FIREBASE_AUTH_DOMAIN}
+        REACT_APP_FIREBASE_PROJECT_ID: ${REACT_APP_FIREBASE_PROJECT_ID}
+        REACT_APP_FIREBASE_STORAGE_BUCKET: ${REACT_APP_FIREBASE_STORAGE_BUCKET}
+        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${REACT_APP_FIREBASE_MESSAGING_SENDER_ID}
+        REACT_APP_FIREBASE_APP_ID: ${REACT_APP_FIREBASE_APP_ID}
         REACT_APP_USE_EMULATOR: "false"
     container_name: pyahuscrum-frontend-homolog
     networks:
@@ -51,11 +59,10 @@ services:
       - ../backend/.env
     environment:
       - RABBITMQ_URL=amqp://guest:guest@pyahuscrum-rabbitmq-homolog:5672/
-      - GOOGLE_CLOUD_PROJECT=pyahu-scrum
+      - GOOGLE_CLOUD_PROJECT=${REACT_APP_FIREBASE_PROJECT_ID}
       - START_CONSUMER=true
       - CORS_ALLOWED_ORIGINS=https://homolog.pyahuscrum.adbfn6.easypanel.host,https://pyahuscrum.adbfn6.easypanel.host,http://localhost:3000
     volumes:
-      # Service account — gerado no GCP Console (NÃO commitar)
       - ../backend/pyahu-scrum-sa.json:/app/pyahu-scrum-sa.json:ro
     networks:
       - easypanel

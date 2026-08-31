@@ -1,15 +1,17 @@
-// Configuração do Firebase — Projeto pyahu-scrum (real, não emulador)
+// Configuração do Firebase — lida de variáveis de ambiente injetadas no build.
 //
-// Desenvolvimento local: pode usar emulador setando REACT_APP_USE_EMULATOR=true
-// Homolog/Prod: usa Firestore real no projeto pyahu-scrum
+// Desenvolvimento local: copie frontend/.env.example para frontend/.env.local e preencha.
+// Homolog/Prod: injetadas como ARG no Dockerfile via docker-compose.
+//
+// Nunca commitar valores reais aqui — todas as chaves vêm de env vars.
 
 export const FIREBASE_CONFIG = {
-  apiKey:            process.env.REACT_APP_FIREBASE_API_KEY            || 'AIzaSyAs0bH4VYB6CayvqrMfTEZjNv9AYt99Uro',
-  authDomain:        process.env.REACT_APP_FIREBASE_AUTH_DOMAIN        || 'pyahu-scrum.firebaseapp.com',
-  projectId:         process.env.REACT_APP_FIREBASE_PROJECT_ID         || 'pyahu-scrum',
-  storageBucket:     process.env.REACT_APP_FIREBASE_STORAGE_BUCKET     || 'pyahu-scrum.firebasestorage.app',
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '365029905997',
-  appId:             process.env.REACT_APP_FIREBASE_APP_ID             || '1:365029905997:web:ae14e549e67127fc82ae04',
+  apiKey:            process.env.REACT_APP_FIREBASE_API_KEY            || '',
+  authDomain:        process.env.REACT_APP_FIREBASE_AUTH_DOMAIN        || '',
+  projectId:         process.env.REACT_APP_FIREBASE_PROJECT_ID         || '',
+  storageBucket:     process.env.REACT_APP_FIREBASE_STORAGE_BUCKET     || '',
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId:             process.env.REACT_APP_FIREBASE_APP_ID             || '',
 };
 
 // Emulador local (apenas dev)
