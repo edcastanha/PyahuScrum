@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@remotion/player": "^4.0.519",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.0.0",
@@ -23,6 +24,7 @@
     "react-markdown": "^8.0.7",
     "react-router-dom": "^6.30.3",
     "react-scripts": "^5.0.1",
+    "remotion": "^4.0.519",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4",
     "zod": "^3.24.0"
