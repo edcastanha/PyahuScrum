@@ -215,9 +215,9 @@ const LandingPage: React.FC = () => {
           <Player
             ref={playerRef}
             component={PipelineAnimation}
-            durationInFrames={160}
+            durationInFrames={130}
             compositionWidth={1280}
-            compositionHeight={480}
+            compositionHeight={520}
             fps={30}
             style={{ width: '100%', borderRadius: '16px', border: '1px solid #2a2a50' }}
             controls
