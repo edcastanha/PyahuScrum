@@ -167,7 +167,7 @@ export const PipelineAnimation: React.FC = () => {
 
   // ── Posições horizontais dos nós (linha principal y=DIAG_TOP+120) ──────────
   const ROW1 = DIAG_TOP + 120;  // linha principal
-  const ROW2 = DIAG_TOP + 245;  // linha inferior (Grill Rounds, ArtifactsAgent, SpecAgent)
+  const ROW2 = DIAG_TOP + 245;  // linha inferior (Entrevista, ArtifactsAgent, SpecAgent)
 
   // Distribui 6 nós na linha principal com margem
   const xs = [90, 230, 370, 510, 700, 890, 1080, 1190];
@@ -184,7 +184,7 @@ export const PipelineAnimation: React.FC = () => {
   ];
 
   const nodes2 = [
-    { id:'grill',     label:'Grill Rounds',   icon:'❓', color:C.yellow,  x:xs[3], y:ROW2, start:40 },
+    { id:'grill',     label:'Entrevista',     icon:'❓', color:C.yellow,  x:xs[3], y:ROW2, start:40 },
     { id:'artifacts', label:'ArtifactsAgent', icon:'📋', color:C.green,   x:xs[4], y:ROW2, start:62 },
     { id:'spec',      label:'SpecAgent',      icon:'📝', color:C.accent,  x:xs[5], y:ROW2, start:72 },
   ];
