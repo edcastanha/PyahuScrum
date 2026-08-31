@@ -6,12 +6,13 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './router/ProtectedRoute';
 import './App.css';
 
-const LoginPage        = lazy(() => import('./pages/auth/LoginPage'));
-const DashboardPage    = lazy(() => import('./pages/dashboard/DashboardPage'));
-const ProjectsPage     = lazy(() => import('./pages/projects/ProjectsPage'));
-// UserStoriesPage e DocumentationPage saíram da navegação (ticket 09, Fatia 2)
-// -- fora de escopo do MVP atual, focado no Agent Orchestrator. Código intacto
-// em pages/user-stories e pages/documentation, só desconectado do roteamento.
+const LoginPage           = lazy(() => import('./pages/auth/LoginPage'));
+const LandingPage         = lazy(() => import('./pages/LandingPage'));
+const DashboardPage       = lazy(() => import('./pages/dashboard/DashboardPage'));
+const ProjectsPage        = lazy(() => import('./pages/projects/ProjectsPage'));
+const ElicitacaoPage      = lazy(() => import('./pages/pipeline/ElicitacaoPage'));
+const ProgressoPage       = lazy(() => import('./pages/pipeline/ProgressoPage'));
+const ConcluidoPage       = lazy(() => import('./pages/pipeline/ConcluidoPage'));
 
 function App() {
   return (
@@ -20,7 +21,8 @@ function App() {
         <Router>
           <Suspense fallback={null}>
             <Routes>
-              <Route path="/" element={<LoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route
                 path="/dashboard"
                 element={
@@ -37,6 +39,36 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <ProjectsPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/elicitacao"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ElicitacaoPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/progresso"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ProgressoPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pipeline/concluido"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ConcluidoPage />
                     </MainLayout>
                   </ProtectedRoute>
                 }

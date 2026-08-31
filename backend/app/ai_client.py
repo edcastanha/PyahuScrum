@@ -41,12 +41,49 @@ Responda em JSON, sem markdown ao redor, no formato exato:
 
 
 class VertexAIClient:
-    """Wrapper fino em volta do Vertex AI SDK (Gemini). Não coberto por teste automatizado
-    nesta fase: depende de credenciais reais do projeto GCP (ticket 02)."""
+    """Wrapper fino em volta do Vertex AI SDK (Gemini).
 
-    def __init__(self, project: str | None = None, model: str = "gemini-2.5-flash"):
+    Suporta dois modos de autenticação (detectado automaticamente):
+    - GEMINI_API_KEY (ou GOOGLE_API_KEY) → Gemini Developer API (mais simples, sem GCP)
+    - Application Default Credentials → Vertex AI (via gcloud / service account)
+    """
+
+    def __init__(self, project: str | None = None, model: str = "gemini-3.6-flash"):
         self._project = project or os.environ.get("GOOGLE_CLOUD_PROJECT", "pyahu-scrum-local")
         self._model = model
+        # Normalizar: GEMINI_API_KEY → GOOGLE_API_KEY (exigido pelo SDK)
+        _gemini_key = os.environ.get("GEMINI_API_KEY")
+        if _gemini_key and not os.environ.get("GOOGLE_API_KEY"):
+            os.environ["GOOGLE_API_KEY"] = _gemini_key
+
+    def _call_gemini(self, system_instruction: str, prompt: str) -> str:
+        """Chama o Gemini com system instruction + prompt e retorna o texto bruto."""
+        from google import genai
+        from google.genai import errors as genai_errors
+        from google.genai import types as genai_types
+
+        try:
+            client = genai.Client()
+            response = client.models.generate_content(
+                model=self._model,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                ) if system_instruction else None,
+            )
+            return response.text or ""
+        except genai_errors.ClientError as exc:
+            if getattr(exc, "code", None) == 429:
+                raise QuotaExceededError(str(exc)) from exc
+            raise TransientServiceError(str(exc)) from exc
+
+    def gerar_elicitacao(self, system_prompt: str, prompt: str) -> str:
+        """Gera perguntas de elicitação (Rodada N). Retorna JSON bruto do Gemini."""
+        return self._call_gemini(system_instruction=system_prompt, prompt=prompt)
+
+    def gerar_artefatos(self, system_prompt: str, prompt: str) -> str:
+        """Gera os artefatos finais (spec, prd, adrs, tickets). Retorna JSON bruto do Gemini."""
+        return self._call_gemini(system_instruction=system_prompt, prompt=prompt)
 
     def generate_artifacts(self, idea: str) -> GeneratedArtifacts:
         # Import local: só os testes com fake exercitam este método; evita exigir

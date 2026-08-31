@@ -1,0 +1,59 @@
+.round {
+  padding: 0.25rem 0;
+}
+
+.cabecalho {
+  font-size: 0.875rem;
+  color: var(--clr-text-muted, #64748b);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btnEnviar {
+  padding: 0.6rem 1.25rem;
+  background: var(--clr-blue-primary, #3b82f6);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btnEnviar:hover:not(:disabled) {
+  background: var(--clr-blue-deep, #2563eb);
+}
+
+.btnEnviar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnGerar {
+  padding: 0.6rem 1.25rem;
+  background: transparent;
+  color: var(--clr-blue-primary, #3b82f6);
+  border: 1.5px solid var(--clr-blue-primary, #3b82f6);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnGerar:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.07);
+}
+
+.btnGerar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

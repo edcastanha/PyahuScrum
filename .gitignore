@@ -157,3 +157,6 @@ instance/
 *.spec
 
 
+infra/.env.homolog
+.qwen/
+pyahu-scrum-sa.json

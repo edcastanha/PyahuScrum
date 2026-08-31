@@ -8,6 +8,9 @@ import {
   FolderKanban,
   Github,
   Code2,
+  MessageSquareMore,
+  Loader,
+  CheckCircle2,
   Menu,
   X
 } from 'lucide-react';
@@ -64,11 +67,21 @@ const Sidebar: React.FC = () => {
       </div>
       <nav className={styles.navigation}>
         <p className={styles.navHeader}>NAVEGAÇÃO</p>
-        <NavLink to="/" className={({ isActive }) => isActive ? styles.active : ''}>
+        <NavLink to="/dashboard" className={({ isActive }) => isActive ? styles.active : ''}>
           <Gauge /> Visão geral dos projetos
         </NavLink>
         <NavLink to="/projects" className={({ isActive }) => isActive ? styles.active : ''}>
           <FolderKanban /> Gerenciar projetos
+        </NavLink>
+        <p className={styles.navHeader} style={{ marginTop: '16px' }}>PIPELINE</p>
+        <NavLink to="/pipeline/elicitacao" className={({ isActive }) => isActive ? styles.active : ''}>
+          <MessageSquareMore /> Em Elicitação
+        </NavLink>
+        <NavLink to="/pipeline/progresso" className={({ isActive }) => isActive ? styles.active : ''}>
+          <Loader /> Em Progresso
+        </NavLink>
+        <NavLink to="/pipeline/concluido" className={({ isActive }) => isActive ? styles.active : ''}>
+          <CheckCircle2 /> Concluídos
         </NavLink>
       </nav>
       <div className={styles.quickLinks}>
