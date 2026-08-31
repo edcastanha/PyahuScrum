@@ -1,33 +1,220 @@
 # Pyahu Scrum 🚀
 
-Bem-vindo ao **Pyahu Scrum**, um framework autônomo de orquestração desenvolvido para a categoria **Taskmaster** do [Agent Development Kit Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/).
+<div align="center">
 
-Este projeto democratiza a engenharia de decisão: captura ideias brutas de negócio e, através de **múltiplos agentes ADK colaborando em segundo plano**, as traduz em especificações técnicas rigorosas (ADRs, Spec, PRD) e tickets de desenvolvimento executáveis — tudo via elicitação interativa no estilo Grill-Me.
+**🌐 Select your language / Selecione seu idioma / Seleccione su idioma:**
+
+[![English](https://img.shields.io/badge/English-🇺🇸-blue?style=for-the-badge)](#english)
+[![Português](https://img.shields.io/badge/Português-🇧🇷-green?style=for-the-badge)](#português)
+[![Español](https://img.shields.io/badge/Español-🇪🇸-red?style=for-the-badge)](#español)
+
+</div>
 
 ---
 
-## 🌐 Ambientes
+<a name="english"></a>
+## 🇺🇸 English
+
+**Pyahu Scrum** is an autonomous orchestration framework built for the **Taskmaster** category of the [Agent Development Kit Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/).
+
+It democratizes decision engineering: captures raw business ideas and, through **multiple ADK agents collaborating in the background**, translates them into rigorous technical specifications (ADRs, Spec, PRD) and executable development tickets — all via interactive Grill-Me-style elicitation.
+
+### 🌐 Environments
+
+| Environment | URL |
+|---|---|
+| **Staging** (develop) | https://homolog.pyahuscrum.adbfn6.easypanel.host |
+| **API** | https://api-homolog.pyahuscrum.adbfn6.easypanel.host |
+| **GCP Project** | `pyahu-scrum` |
+| **Firestore** | [console.firebase.google.com/project/pyahu-scrum/firestore](https://console.firebase.google.com/project/pyahu-scrum/firestore) |
+
+### 🤖 ADK Agents
+
+The pipeline is orchestrated by **3 Google ADK 2.8 agents** working in collaboration:
+
+| Agent | Role | ADK Type |
+|---|---|---|
+| **OrchestratorAgent** | Grill-style elicitation (rounds Q1..Qn with ➡️ recommendations) | `LlmAgent` |
+| **ArtifactsAgent** | Generates ADRs (Architecture Decision Records) + PRD | `LlmAgent` |
+| **SpecAgent** | Generates technical Spec + atomic development tickets | `LlmAgent` |
+
+#### Collaboration flow
+
+```
+OrchestratorAgent  (up to 4 elicitation rounds, HITL)
+      ↓ user approves scope
+SequentialAgent: ArtifactsAgent → SpecAgent
+      ↓
+ZIP: spec.md + prd.md + ADRs + tickets
+```
+
+> **Resilient fallback:** when ADK is unavailable (quota / pending billing), the system automatically falls back to direct Gemini calls — **the pipeline never stops**.
+
+### ⚙️ Architecture
+
+#### Complete flow
+
+```
+User visits /              →  Landing Page (React + live telemetry)
+User visits /login         →  GitHub OAuth authentication
+User creates project       →  ProjectsPage → idea form
+
+POST /projects
+  → Firestore: { status: TRIAGEM_INICIAL }
+  → RabbitMQ: pyahu.pipeline
+  → Immediate 201 response
+
+Consumer thread (pyahu.pipeline)
+  ├─ Tries: ADK OrchestratorAgent  (gemini-3.6-flash via Gemini API)
+  └─ Automatic fallback: google-genai direct  (if quota/billing unavailable)
+  → Firestore: { status: ELICITANDO, perguntas_abertas: [Q1..Q5 + recommendations] }
+  → onSnapshot → Pipeline Board → "In Elicitation" (card with rounds)
+
+User answers questions  →  POST /projects/{id}/respostas
+  → RabbitMQ: pyahu.elicitacao  (type: resposta)
+  → Consumer → OrchestratorAgent (next round)
+  → Repeats until: pronto: true | round 4 | user forces (≥ R2)
+
+OrchestratorAgent signals completion
+  → Gemini generates Scope Summary (markdown)
+  → Firestore: { status: AGUARDANDO_APROVACAO_ESCOPO, resumo_escopo: "..." }
+
+HITL — User reviews the summary
+  ├─ ✅ Approve  →  POST /projects/{id}/aprovar
+  │               →  ADK SequentialAgent: ArtifactsAgent → SpecAgent
+  │               →  Firestore: { status: CONCLUIDO, artefatos: {...} }
+  │               →  onSnapshot → "Completed" card + ⬇ ZIP button
+  │
+  └─ 📝 Revise   →  POST /projects/{id}/revisao  { feedback: "..." }
+                  →  Gemini decides: more rounds or updated summary
+
+User deletes project  →  DELETE /projects/{id}
+  → Firestore: removes doc + elicitacao/ subcollection (cascade)
+  → onSnapshot → card removed in real time across all open pages
+```
+
+#### Pipeline state table
+
+| Status | Set by | Next action |
+|---|---|---|
+| `TRIAGEM_INICIAL` | `POST /projects` | Consumer → OrchestratorAgent (Round 1) |
+| `ELICITANDO` | OrchestratorAgent | onSnapshot → "In Elicitation" card |
+| `AGUARDANDO_APROVACAO_ESCOPO` | Elicitation complete | onSnapshot → "In Progress" card with markdown summary |
+| `GERANDO_ADR` | Approval received | SequentialAgent: ArtifactsAgent → SpecAgent |
+| `CONCLUIDO` | SpecAgent | onSnapshot → "Completed" card + ⬇ ZIP |
+| `FALHA_PROCESSAMENTO` | 3 retries exhausted | Message → DLQ · card shows error |
+
+#### C4 Diagram
+
+```mermaid
+C4Container
+    title Pyahu Scrum - Containers (Staging)
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
+    Person(user, "Manager / User", "Creates projects, answers interviews and approves scopes")
+
+    System_Ext(gemini_api, "Google Gemini API", "Gemini and embeddings")
+    System_Ext(firebase, "Google Firebase", "Firestore and security rules")
+    System_Ext(gh_oauth, "GitHub OAuth", "Authentication")
+
+    System_Boundary(pyahu, "Pyahu Scrum System") {
+        Container(landing, "Landing Page", "React + Firebase", "Presentation and live telemetry")
+        Container(board, "Pipeline Board", "React + TypeScript", "Projects and pipeline stages")
+        Container(api, "Agent Orchestrator", "FastAPI + Python", "REST API and consumers")
+        ContainerQueue(rabbit, "RabbitMQ", "AMQP", "Pipeline queues and DLX")
+        Container(orchestrator, "OrchestratorAgent", "Google ADK", "Interview and recommendations")
+        Container(artifacts, "ArtifactsAgent", "Google ADK", "Generates ADRs and PRD")
+        Container(spec, "SpecAgent", "Google ADK", "Generates spec and tickets")
+        Container(rag, "RAG Service", "Python", "Embeddings and semantic search")
+    }
+
+    Rel_D(user, landing, "Visits", "HTTPS")
+    Rel_D(user, board, "Uses", "HTTPS")
+    Rel_D(board, api, "Sends commands", "REST")
+    Rel_D(board, gh_oauth, "Authenticates", "OAuth")
+    Rel_R(api, rabbit, "Publishes", "AMQP")
+    Rel_L(rabbit, api, "Consumes", "AMQP")
+    Rel_D(api, orchestrator, "Runs interview", "ADK")
+    Rel_D(api, artifacts, "Generates artifacts", "ADK")
+    Rel_R(artifacts, spec, "Chains output", "ADK")
+    Rel_D(orchestrator, gemini_api, "Queries model", "HTTPS")
+    Rel_D(artifacts, gemini_api, "Generates ADR and PRD", "HTTPS")
+    Rel_D(spec, gemini_api, "Generates spec and tickets", "HTTPS")
+    Rel_D(api, firebase, "Persists projects", "Firestore")
+    Rel_L(board, firebase, "Receives updates", "onSnapshot")
+```
+
+### 🛠️ Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + TypeScript + Firebase SDK |
+| Backend | FastAPI + Python 3.12 |
+| **Agents** | **Google ADK 2.8** (OrchestratorAgent + ArtifactsAgent + SpecAgent) |
+| AI | Google Gemini Flash + text-embedding-004 |
+| Queue | RabbitMQ (staging) → Google Cloud Pub/Sub (production) |
+| Database | Google Cloud Firestore (real, project `pyahu-scrum`) |
+| Infra | Docker + Traefik + Easypanel |
+
+### 🚀 Running locally
+
+```bash
+# 1. Clone
+git clone https://github.com/edcastanha/PyahuScrum.git
+cd PyahuScrum
+
+# 2. Backend credentials — create backend/pyahu-scrum-sa.json (Service Account GCP)
+cd backend
+cat > .env << EOF
+GEMINI_API_KEY=<your_gemini_api_key>
+GOOGLE_CLOUD_PROJECT=pyahu-scrum
+GOOGLE_APPLICATION_CREDENTIALS=/app/pyahu-scrum-sa.json
+EOF
+
+# 3. Full stack via Docker (staging)
+git checkout develop && git pull origin develop
+docker compose -f infra/docker-compose.homolog.yml up -d --build
+```
+
+### 🛡️ Governance & Human-in-the-Loop
+
+- **Automatic retry** — up to 3 attempts per message before going to DLQ
+- **Delete guard** — consumer checks if project still exists before processing orphan messages
+- **HITL approval** — user reviews Gemini-generated scope summary and approves or requests revision
+- **ADK → Gemini fallback** — if ADK fails (quota/billing), pipeline continues with direct Gemini calls
+
+[⬆ Back to top](#pyahu-scrum-)
+
+---
+
+<a name="português"></a>
+## 🇧🇷 Português
+
+**Pyahu Scrum** é um framework autônomo de orquestração desenvolvido para a categoria **Taskmaster** do [Agent Development Kit Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/).
+
+Este projeto democratiza a engenharia de decisão: captura ideias brutas de negócio e, através de **múltiplos agentes ADK colaborando em segundo plano**, as traduz em especificações técnicas rigorosas (ADRs, Spec, PRD) e tickets de desenvolvimento executáveis — tudo via elicitação interativa no estilo Grill-Me.
+
+### 🌐 Ambientes
 
 | Ambiente | URL |
 |---|---|
 | **Homologação** (develop) | https://homolog.pyahuscrum.adbfn6.easypanel.host |
 | **API** | https://api-homolog.pyahuscrum.adbfn6.easypanel.host |
-| **GCP Project** | `pyahu-scrum` |
+| **Projeto GCP** | `pyahu-scrum` |
 | **Firestore** | [console.firebase.google.com/project/pyahu-scrum/firestore](https://console.firebase.google.com/project/pyahu-scrum/firestore) |
 
----
-
-## 🤖 Agentes ADK
+### 🤖 Agentes ADK
 
 O pipeline é orquestrado por **3 agentes Google ADK 2.8** em colaboração:
 
 | Agente | Função | Tipo ADK |
 |---|---|---|
-| **OrchestratorAgent** | Elicitação grill-style (rounds Q1..Qn com ➡️ recomendações, estilo /grilling Matt Pocock) | `LlmAgent` |
-| **ArtifactsAgent** | Gera ADRs (Architecture Decision Records) + PRD (Product Requirements Doc) | `LlmAgent` |
+| **OrchestratorAgent** | Elicitação grill-style (rounds Q1..Qn com ➡️ recomendações) | `LlmAgent` |
+| **ArtifactsAgent** | Gera ADRs (Architecture Decision Records) + PRD | `LlmAgent` |
 | **SpecAgent** | Gera Spec técnica + Tickets de desenvolvimento atômicos | `LlmAgent` |
 
-### Fluxo de colaboração
+#### Fluxo de colaboração
 
 ```
 OrchestratorAgent  (até 4 rodadas de elicitação, HITL)
@@ -39,40 +226,12 @@ ZIP: spec.md + prd.md + ADRs + tickets
 
 > **Fallback resiliente:** quando o ADK está indisponível (quota / billing pendente), o sistema cai automaticamente para chamadas diretas ao Gemini — **o pipeline nunca para**.
 
----
+### ⚙️ Arquitetura
 
-## 🏗️ Estrutura do Repositório
-
-```
-PyahuScrum/
-├── frontend/                  # React/TypeScript — Pipeline Board (3 páginas)
-├── backend/
-│   ├── app/
-│   │   ├── agents/            # Agentes ADK
-│   │   │   ├── orchestrator_agent.py  # Grill-style elicitação
-│   │   │   ├── artifacts_agent.py     # ADRs + PRD
-│   │   │   ├── spec_agent.py          # Spec + Tickets
-│   │   │   └── pipeline.py            # SequentialAgent + Runner
-│   │   ├── elicitacao.py      # Orquestração do pipeline + fallback
-│   │   ├── artefatos.py       # ZIP de artefatos
-│   │   ├── rag.py             # Embeddings + busca por cosseno
-│   │   ├── consumer.py        # Worker RabbitMQ (2 filas)
-│   │   └── main.py            # FastAPI endpoints
-├── infra/                     # Docker + docker-compose
-├── specs/                     # Specs e PRDs por fatia
-├── docs/adr/                  # Architecture Decision Records
-├── firestore.rules            # Security Rules do Firestore
-└── firebase.json              # Config para deploy das rules via CLI
-```
-
----
-
-## ⚙️ Arquitetura
-
-### Fluxo completo
+#### Fluxo completo
 
 ```
-Usuário acessa /            →  Landing Page (React + Remotion + telemetria live)
+Usuário acessa /            →  Landing Page (React + telemetria live)
 Usuário acessa /login       →  Autenticação GitHub OAuth
 Usuário cria projeto        →  ProjectsPage → formulário de ideia
 
@@ -83,49 +242,44 @@ POST /projects
 
 Consumer thread (pyahu.pipeline)
   ├─ Tenta: ADK OrchestratorAgent  (gemini-3.6-flash via Gemini API)
-  └─ Fallback automático: google-genai direto  (se quota/billing indisponível)
+  └─ Fallback automático: google-genai direto
   → Firestore: { status: ELICITANDO, perguntas_abertas: [Q1..Q5 + recomendações] }
   → onSnapshot → Pipeline Board → "Em Elicitação" (card com rodadas)
 
 Usuário responde perguntas  →  POST /projects/{id}/respostas
-  → RabbitMQ: pyahu.elicitacao  (tipo: resposta)
   → Consumer → OrchestratorAgent (próxima rodada)
   → Repete até: pronto: true | rodada 4 | usuário força (≥ R2)
 
 OrchestratorAgent sinaliza conclusão
-  → Gemini gera Resumo de Escopo (markdown: Ideia · Requisitos · Escopo · Fora do escopo)
-  → Firestore: { status: AGUARDANDO_APROVACAO_ESCOPO, resumo_escopo: "..." }
-  → onSnapshot → Pipeline Board → "Em Progresso" (card com resumo + botões)
+  → Gemini gera Resumo de Escopo (markdown)
+  → Firestore: { status: AGUARDANDO_APROVACAO_ESCOPO }
 
 HITL — Usuário analisa o resumo
   ├─ ✅ Aprova   →  POST /projects/{id}/aprovar
-  │               →  RabbitMQ: pyahu.elicitacao  (tipo: aprovar)
-  │               →  Consumer → ADK SequentialAgent:
-  │                    ArtifactsAgent → gera ADRs + PRD
-  │                         ↓ output_key
-  │                    SpecAgent     → gera Spec técnica + Tickets (máx 15)
+  │               →  ADK SequentialAgent: ArtifactsAgent → SpecAgent
   │               →  Firestore: { status: CONCLUIDO, artefatos: {...} }
-  │               →  RAG: embedding salvo no Firestore para contexto futuro
-  │               →  onSnapshot → Pipeline Board → "Concluídos" + botão ⬇ ZIP
+  │               →  onSnapshot → card "Concluídos" + botão ⬇ ZIP
   │
   └─ 📝 Revisão  →  POST /projects/{id}/revisao  { feedback: "..." }
-                  →  RabbitMQ: pyahu.elicitacao  (tipo: revisao)
-                  →  Consumer → Gemini analisa feedback:
-                       ├─ precisa_mais_info: true  → nova rodada (ELICITANDO)
-                       └─ precisa_mais_info: false → resumo atualizado
+                  →  Gemini decide: mais rodadas ou resumo atualizado
 
-Usuário exclui projeto      →  DELETE /projects/{id}  (botão 🗑 em qualquer página)
-  → Firestore: remove doc principal + subcoleção elicitacao/ em lotes (cascade)
-  → Consumer: guard _project_exists() — mensagens órfãs descartadas com ack
+Usuário exclui projeto  →  DELETE /projects/{id}
+  → Firestore: remove doc principal + subcoleção elicitacao/ (cascade)
   → onSnapshot → card removido em tempo real em todas as páginas abertas
-
-Falhas
-  → Retry automático: até 3 tentativas por mensagem
-  → pyahu.dlx → pyahu.pipeline.dlq  (Dead Letter Queue)
-  → Firestore: { status: FALHA_PROCESSAMENTO, failure_reason: "..." }
 ```
 
-### Diagrama C4
+#### Tabela de estados do pipeline
+
+| Status | Quem define | O que acontece a seguir |
+|---|---|---|
+| `TRIAGEM_INICIAL` | `POST /projects` | Consumer → OrchestratorAgent (Rodada 1) |
+| `ELICITANDO` | OrchestratorAgent | onSnapshot → card "Em Elicitação" com perguntas |
+| `AGUARDANDO_APROVACAO_ESCOPO` | Entrevista concluída | onSnapshot → card "Em Progresso" com resumo markdown |
+| `GERANDO_ADR` | Aprovação recebida | SequentialAgent: ArtifactsAgent → SpecAgent |
+| `CONCLUIDO` | SpecAgent | onSnapshot → card "Concluídos" + botão ⬇ ZIP |
+| `FALHA_PROCESSAMENTO` | 3 tentativas esgotadas | Mensagem → DLQ · card mostra erro |
+
+#### Diagrama C4
 
 ```mermaid
 C4Container
@@ -142,14 +296,11 @@ C4Container
     System_Boundary(pyahu, "Sistema Pyahu Scrum") {
         Container(landing, "Landing Page", "React + Firebase", "Apresentação e telemetria")
         Container(board, "Pipeline Board", "React + TypeScript", "Projetos e etapas do pipeline")
-
         Container(api, "Agent Orchestrator", "FastAPI + Python", "API REST e consumidores")
         ContainerQueue(rabbit, "RabbitMQ", "AMQP", "Filas do pipeline e DLX")
-
         Container(orchestrator, "OrchestratorAgent", "Google ADK", "Entrevista e recomendações")
         Container(artifacts, "ArtifactsAgent", "Google ADK", "Gera ADRs e PRD")
-        Container(spec, "SpecAgent", "Google ADK", "Gera especificação e tickets")
-
+        Container(spec, "SpecAgent", "Google ADK", "Gera spec e tickets")
         Container(rag, "RAG Service", "Python", "Embeddings e busca semântica")
     }
 
@@ -157,219 +308,195 @@ C4Container
     Rel_D(user, board, "Usa", "HTTPS")
     Rel_D(board, api, "Envia comandos", "REST")
     Rel_D(board, gh_oauth, "Autentica", "OAuth")
-
     Rel_R(api, rabbit, "Publica", "AMQP")
     Rel_L(rabbit, api, "Consome", "AMQP")
-
     Rel_D(api, orchestrator, "Executa entrevista", "ADK")
     Rel_D(api, artifacts, "Gera artefatos", "ADK")
     Rel_R(artifacts, spec, "Encadeia saída", "ADK")
-
     Rel_D(orchestrator, gemini_api, "Consulta modelo", "HTTPS")
-    Rel_D(artifacts, gemini_api, "Gera ADR e PRD", "HTTPS")
-    Rel_D(spec, gemini_api, "Gera spec e tickets", "HTTPS")
-    Rel_D(rag, gemini_api, "Gera embeddings", "HTTPS")
-
     Rel_D(api, firebase, "Persiste projetos", "Firestore")
-    Rel_D(rag, firebase, "Persiste embeddings", "Firestore")
-    Rel_L(landing, firebase, "Recebe telemetria", "onSnapshot")
     Rel_L(board, firebase, "Recebe atualizações", "onSnapshot")
-
-    UpdateRelStyle(user, landing, $offsetX="-35", $offsetY="-20")
-    UpdateRelStyle(user, board, $offsetX="35", $offsetY="20")
-    UpdateRelStyle(board, api, $offsetY="-30")
-    UpdateRelStyle(board, gh_oauth, $offsetY="35")
-
-    UpdateRelStyle(api, rabbit, $offsetY="-25")
-    UpdateRelStyle(rabbit, api, $offsetY="25")
-
-    UpdateRelStyle(api, orchestrator, $offsetX="-35", $offsetY="-20")
-    UpdateRelStyle(api, artifacts, $offsetX="35", $offsetY="20")
-    UpdateRelStyle(artifacts, spec, $offsetY="-25")
-
-    UpdateRelStyle(orchestrator, gemini_api, $offsetX="-45", $offsetY="-25")
-    UpdateRelStyle(artifacts, gemini_api, $offsetX="20", $offsetY="20")
-    UpdateRelStyle(spec, gemini_api, $offsetX="55", $offsetY="35")
-    UpdateRelStyle(rag, gemini_api, $offsetX="-35", $offsetY="35")
-
-    UpdateRelStyle(api, firebase, $offsetX="-35", $offsetY="-25")
-    UpdateRelStyle(rag, firebase, $offsetX="35", $offsetY="25")
-    UpdateRelStyle(landing, firebase, $offsetX="-45", $offsetY="25")
-    UpdateRelStyle(board, firebase, $offsetX="45", $offsetY="-25")
 ```
 
-### Tabela de estados do pipeline
-
-| Status | Quem define | O que acontece a seguir |
-|---|---|---|
-| `TRIAGEM_INICIAL` | `POST /projects` | Consumer → OrchestratorAgent (Rodada 1) |
-| `ELICITANDO` | OrchestratorAgent | onSnapshot → card "Em Elicitação" com perguntas |
-| `AGUARDANDO_APROVACAO_ESCOPO` | Entrevista concluída | onSnapshot → card "Em Progresso" com resumo markdown |
-| `GERANDO_ADR` | Aprovação recebida | SequentialAgent: ArtifactsAgent → SpecAgent |
-| `CONCLUIDO` | SpecAgent | onSnapshot → card "Concluídos" + botão ⬇ ZIP |
-| `FALHA_PROCESSAMENTO` | 3 tentativas esgotadas | Mensagem → DLQ · card mostra erro |
-
-### RAG — Recuperação de contexto histórico
-
-O backend gera embeddings (`text-embedding-004`) de cada projeto concluído e realiza busca por similaridade de cosseno em Python — preparado para Firestore Vector Search em produção:
-
-$$
-\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}$$
-$$
-
-Os 3 projetos mais similares são injetados no prompt dos agentes — evitando repetição e enriquecendo cada spec com decisões de projetos anteriores.
-
-## 🛠️ Stack
+### 🛠️ Stack
 
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 18 + TypeScript + Firebase SDK |
-| Backend | FastAPI + Python 3.11 |
+| Backend | FastAPI + Python 3.12 |
 | **Agentes** | **Google ADK 2.8** (OrchestratorAgent + ArtifactsAgent + SpecAgent) |
-| IA | Google Gemini 3.6 Flash + text-embedding-004 |
+| IA | Google Gemini Flash + text-embedding-004 |
 | Fila | RabbitMQ (homolog) → Google Cloud Pub/Sub (prod) |
 | Banco | Google Cloud Firestore (real, projeto `pyahu-scrum`) |
 | Infra | Docker + Traefik + Easypanel |
 
----
-
-## 🚀 Como executar localmente
-
-### Pré-requisitos
-
-- Docker + Docker Compose
-- Node.js 22+
-- Python 3.11+
-- Projeto GCP com Firestore habilitado
-- **Billing habilitado** no projeto GCP (necessário para ADK via Vertex AI)
-
-### 1. Clone o repositório
+### 🚀 Como executar localmente
 
 ```bash
+# 1. Clone
 git clone https://github.com/edcastanha/PyahuScrum.git
 cd PyahuScrum
-```
 
-### 2. Credenciais GCP
-
-1. Acesse [console.cloud.google.com/iam-admin/serviceaccounts?project=pyahu-scrum](https://console.cloud.google.com/iam-admin/serviceaccounts?project=pyahu-scrum)
-2. Crie uma conta de serviço com papéis: `Cloud Datastore User` + `Vertex AI User`
-3. Baixe o JSON e salve em `backend/pyahu-scrum-sa.json`
-
-### 3. Backend
-
-```bash
+# 2. Credenciais GCP — crie backend/pyahu-scrum-sa.json (Service Account)
 cd backend
-
-# Criar .env (nunca commitar!)
 cat > .env << EOF
 GEMINI_API_KEY=<sua_chave_gemini_api>
 GOOGLE_CLOUD_PROJECT=pyahu-scrum
 GOOGLE_APPLICATION_CREDENTIALS=/app/pyahu-scrum-sa.json
 EOF
 
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
-```
-
-> **ADK com Vertex AI (recomendado):** requer billing habilitado no GCP.
-> **ADK com Gemini API key (free tier):** funciona até 20 req/dia sem billing — fallback automático garante continuidade.
-
-### 4. Frontend
-
-```bash
-cd frontend
-npm install
-# Edite REACT_APP_AGENT_ORCHESTRATOR_URL=http://localhost:8001
-cp .env.example .env.local
-npm start
-```
-
-### 5. Stack completa via Docker (homolog)
-
-```bash
-# Pré-requisito: backend/pyahu-scrum-sa.json presente
+# 3. Stack completa via Docker (homolog)
 git checkout develop && git pull origin develop
 docker compose -f infra/docker-compose.homolog.yml up -d --build
 ```
 
----
+### 🛡️ Governança e Human-in-the-Loop
 
-## 🔥 Firestore Security Rules
-
-O frontend acessa o Firestore diretamente via Firebase SDK (onSnapshot em tempo real). As rules permitem leitura pública e bloqueiam escrita pelo browser — o backend escreve via Service Account (ignora rules):
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /projects/{projectId} {
-      allow read: if true;
-      allow write: if false;
-      match /elicitacao/{rodada} {
-        allow read: if true;
-        allow write: if false;
-      }
-    }
-  }
-}
-```
-
-Para publicar as rules via CLI:
-```bash
-GOOGLE_APPLICATION_CREDENTIALS=backend/pyahu-scrum-sa.json \
-  firebase deploy --only firestore:rules --project pyahu-scrum
-```
-
----
-
-## 🗂️ Pipeline de Elicitação
-
-O pipeline passa por 4 fases visíveis na sidebar:
-
-| Página | Rota | Status do projeto |
-|---|---|---|
-| **Em Elicitação** | `/pipeline/elicitacao` | `TRIAGEM_INICIAL`, `ELICITANDO` |
-| **Em Progresso** | `/pipeline/progresso` | `AGUARDANDO_APROVACAO_ESCOPO`, `GERANDO_ADR` |
-| **Concluídos** | `/pipeline/concluido` | `CONCLUIDO` |
-
-Cada card exibe o histórico de rodadas (1–4). Rodadas respondidas ficam desabilitadas. Na página Concluídos, o botão **⬇ Baixar ZIP** entrega `spec.md + prd.md + ADRs + tickets`.
-
----
-
-## 🛡️ Governança e Human-in-the-Loop
-
-O Pyahu Scrum implementa política estrita de resiliência:
-
-- **Retry automático** — até 3 tentativas por mensagem antes de ir para a DLQ (`pyahu.pipeline.dlq`)
+- **Retry automático** — até 3 tentativas por mensagem antes de ir para a DLQ
 - **Guard de delete** — consumer verifica se o projeto ainda existe antes de processar mensagens órfãs
-- **HITL de aprovação** — após a elicitação, o Gemini gera um resumo de escopo em markdown. O usuário revisa e pode:
-  - **✅ Aprovar** → dispara `ArtifactsAgent → SpecAgent` para gerar os artefatos
-  - **📝 Revisar** → envia feedback; Gemini decide se precisa de mais rodadas ou atualiza o resumo
-- **Fallback ADK → Gemini direto** — se o ADK falhar (quota/billing), o pipeline continua com chamadas diretas ao Gemini
+- **HITL de aprovação** — usuário revisa resumo de escopo gerado pelo Gemini e aprova ou solicita revisão
+- **Fallback ADK → Gemini** — se o ADK falhar (quota/billing), o pipeline continua com chamadas diretas ao Gemini
+
+[⬆ Voltar ao topo](#pyahu-scrum-)
 
 ---
 
-## 📁 Credenciais e Segredos
+<a name="español"></a>
+## 🇪🇸 Español
 
-| Arquivo | Descrição | Gitignored |
+**Pyahu Scrum** es un framework autónomo de orquestación desarrollado para la categoría **Taskmaster** del [Agent Development Kit Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/).
+
+Este proyecto democratiza la ingeniería de decisiones: captura ideas brutas de negocio y, a través de **múltiples agentes ADK colaborando en segundo plano**, las traduce en especificaciones técnicas rigurosas (ADRs, Spec, PRD) y tickets de desarrollo ejecutables — todo mediante elicitación interactiva al estilo Grill-Me.
+
+### 🌐 Entornos
+
+| Entorno | URL |
+|---|---|
+| **Homologación** (develop) | https://homolog.pyahuscrum.adbfn6.easypanel.host |
+| **API** | https://api-homolog.pyahuscrum.adbfn6.easypanel.host |
+| **Proyecto GCP** | `pyahu-scrum` |
+| **Firestore** | [console.firebase.google.com/project/pyahu-scrum/firestore](https://console.firebase.google.com/project/pyahu-scrum/firestore) |
+
+### 🤖 Agentes ADK
+
+El pipeline es orquestado por **3 agentes Google ADK 2.8** en colaboración:
+
+| Agente | Función | Tipo ADK |
 |---|---|---|
-| `backend/.env` | `GEMINI_API_KEY`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_APPLICATION_CREDENTIALS` | ✅ |
-| `backend/pyahu-scrum-sa.json` | Service Account GCP (Firestore + Vertex AI + ADK) | ✅ |
+| **OrchestratorAgent** | Elicitación grill-style (rondas Q1..Qn con ➡️ recomendaciones) | `LlmAgent` |
+| **ArtifactsAgent** | Genera ADRs (Architecture Decision Records) + PRD | `LlmAgent` |
+| **SpecAgent** | Genera Spec técnica + Tickets de desarrollo atómicos | `LlmAgent` |
 
-**Nunca commitar credenciais.** O `.gitignore` bloqueia arquivos sensíveis na pasta `backend/`.
+#### Flujo de colaboración
+
+```
+OrchestratorAgent  (hasta 4 rondas de elicitación, HITL)
+      ↓ usuario aprueba el alcance
+SequentialAgent: ArtifactsAgent → SpecAgent
+      ↓
+ZIP: spec.md + prd.md + ADRs + tickets
+```
+
+> **Fallback resiliente:** cuando el ADK no está disponible (cuota / facturación pendiente), el sistema cae automáticamente a llamadas directas a Gemini — **el pipeline nunca se detiene**.
+
+### ⚙️ Arquitectura
+
+#### Flujo completo
+
+```
+Usuario visita /            →  Landing Page (React + telemetría en vivo)
+Usuario visita /login       →  Autenticación GitHub OAuth
+Usuario crea proyecto       →  ProjectsPage → formulario de idea
+
+POST /projects
+  → Firestore: { status: TRIAGEM_INICIAL }
+  → RabbitMQ: pyahu.pipeline
+  → Retorno inmediato 201
+
+Consumer thread (pyahu.pipeline)
+  ├─ Intenta: ADK OrchestratorAgent  (gemini-3.6-flash via Gemini API)
+  └─ Fallback automático: google-genai directo
+  → Firestore: { status: ELICITANDO, perguntas_abertas: [Q1..Q5 + recomendaciones] }
+  → onSnapshot → Pipeline Board → "En Elicitación" (tarjeta con rondas)
+
+Usuario responde preguntas  →  POST /projects/{id}/respostas
+  → Consumer → OrchestratorAgent (siguiente ronda)
+  → Repite hasta: pronto: true | ronda 4 | usuario fuerza (≥ R2)
+
+OrchestratorAgent señala conclusión
+  → Gemini genera Resumen de Alcance (markdown)
+  → Firestore: { status: AGUARDANDO_APROVACAO_ESCOPO }
+
+HITL — Usuario analiza el resumen
+  ├─ ✅ Aprueba  →  POST /projects/{id}/aprovar
+  │               →  ADK SequentialAgent: ArtifactsAgent → SpecAgent
+  │               →  Firestore: { status: CONCLUIDO, artefatos: {...} }
+  │               →  onSnapshot → tarjeta "Completados" + botón ⬇ ZIP
+  │
+  └─ 📝 Revisión →  POST /projects/{id}/revisao  { feedback: "..." }
+                  →  Gemini decide: más rondas o resumen actualizado
+
+Usuario elimina proyecto  →  DELETE /projects/{id}
+  → Firestore: elimina doc principal + subcolección elicitacao/ (cascade)
+  → onSnapshot → tarjeta eliminada en tiempo real en todas las páginas abiertas
+```
+
+#### Tabla de estados del pipeline
+
+| Estado | Lo define | Qué sucede después |
+|---|---|---|
+| `TRIAGEM_INICIAL` | `POST /projects` | Consumer → OrchestratorAgent (Ronda 1) |
+| `ELICITANDO` | OrchestratorAgent | onSnapshot → tarjeta "En Elicitación" |
+| `AGUARDANDO_APROVACAO_ESCOPO` | Entrevista concluida | onSnapshot → tarjeta "En Progreso" con resumen markdown |
+| `GERANDO_ADR` | Aprobación recibida | SequentialAgent: ArtifactsAgent → SpecAgent |
+| `CONCLUIDO` | SpecAgent | onSnapshot → tarjeta "Completados" + botón ⬇ ZIP |
+| `FALHA_PROCESSAMENTO` | 3 intentos agotados | Mensaje → DLQ · tarjeta muestra error |
+
+### 🛠️ Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | React 18 + TypeScript + Firebase SDK |
+| Backend | FastAPI + Python 3.12 |
+| **Agentes** | **Google ADK 2.8** (OrchestratorAgent + ArtifactsAgent + SpecAgent) |
+| IA | Google Gemini Flash + text-embedding-004 |
+| Cola | RabbitMQ (homologación) → Google Cloud Pub/Sub (producción) |
+| Base de datos | Google Cloud Firestore (real, proyecto `pyahu-scrum`) |
+| Infra | Docker + Traefik + Easypanel |
+
+### 🚀 Ejecutar localmente
+
+```bash
+# 1. Clone
+git clone https://github.com/edcastanha/PyahuScrum.git
+cd PyahuScrum
+
+# 2. Credenciales GCP — crea backend/pyahu-scrum-sa.json (Service Account)
+cd backend
+cat > .env << EOF
+GEMINI_API_KEY=<tu_clave_gemini_api>
+GOOGLE_CLOUD_PROJECT=pyahu-scrum
+GOOGLE_APPLICATION_CREDENTIALS=/app/pyahu-scrum-sa.json
+EOF
+
+# 3. Stack completo via Docker (homologación)
+git checkout develop && git pull origin develop
+docker compose -f infra/docker-compose.homolog.yml up -d --build
+```
+
+### 🛡️ Gobernanza y Human-in-the-Loop
+
+- **Reintento automático** — hasta 3 intentos por mensaje antes de ir a la DLQ
+- **Guard de delete** — el consumer verifica si el proyecto aún existe antes de procesar mensajes huérfanos
+- **HITL de aprobación** — el usuario revisa el resumen de alcance generado por Gemini y aprueba o solicita revisión
+- **Fallback ADK → Gemini** — si el ADK falla (cuota/facturación), el pipeline continúa con llamadas directas a Gemini
+
+[⬆ Volver al inicio](#pyahu-scrum-)
 
 ---
 
-## ⚡ Ativar ADK via Vertex AI (billing)
+<div align="center">
 
-O ADK usa Vertex AI para chamadas de produção (sem limite de quota diária):
+Made with ❤️ in Fortaleza, Brazil 🇧🇷 · [GitHub](https://github.com/edcastanha/PyahuScrum)
 
-1. Acesse: https://console.developers.google.com/billing/enable?project=pyahu-scrum
-2. Vincule um cartão de crédito ou use créditos GCP disponíveis
-3. Reinicie o container da API:
-   ```bash
-   docker restart pyahuscrum-api-homolog
-   ```
-
-Após o billing, os 3 agentes ADK passam a usar `GOOGLE_GENAI_USE_VERTEXAI=true` automaticamente via `GOOGLE_APPLICATION_CREDENTIALS`.
+</div>
