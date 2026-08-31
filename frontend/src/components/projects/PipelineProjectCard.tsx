@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RodadaHistorico, subscribeToRodadas } from '../../services/pipeline/projectStatusListener';
 import ElicitacaoRound from './ElicitacaoRound';
+import { deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
 import styles from './PipelineProjectCard.module.css';
 
 interface Props {
@@ -23,6 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
 export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, status, showDownload }) => {
   const [rodadas, setRodadas] = useState<RodadaHistorico[]>([]);
   const [expandido, setExpandido] = useState(false);
+  const [deletando, setDeletando] = useState(false);
 
   useEffect(() => {
     const unsub = subscribeToRodadas(projectId, setRodadas);
@@ -34,11 +36,24 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
     window.open(url, '_blank');
   };
 
+  const handleDelete = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Excluir este projeto? Todos os artefatos e histórico serão removidos permanentemente.')) return;
+    setDeletando(true);
+    try {
+      await deleteProjectFromPipeline(projectId);
+      // onSnapshot vai remover o card automaticamente quando o Firestore atualizar
+    } catch (err) {
+      console.error('Erro ao excluir projeto:', err);
+      setDeletando(false);
+    }
+  }, [projectId]);
+
   const rodadaAtiva = rodadas.find(r => !r.respondida);
   const todasRespondidas = rodadas.length > 0 && rodadas.every(r => r.respondida);
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${deletando ? styles.cardDeletando : ''}`}>
       <div className={styles.header} onClick={() => setExpandido(e => !e)}>
         <div className={styles.headerLeft}>
           <span className={styles.toggle}>{expandido ? '▾' : '▸'}</span>
@@ -54,6 +69,14 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
               ⬇ Baixar ZIP
             </button>
           )}
+          <button
+            className={styles.deleteBtn}
+            onClick={handleDelete}
+            disabled={deletando}
+            title="Excluir projeto"
+          >
+            {deletando ? '⏳' : '🗑'}
+          </button>
         </div>
       </div>
 
@@ -82,10 +105,10 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
                           ))}
                         </div>
                       )}
-                      {p.permite_texto && (
+                      {p.permite_texto && resp?.texto && (
                         <textarea
                           className={styles.textareaDesabilitado}
-                          value={resp?.texto ?? ''}
+                          value={resp.texto}
                           disabled
                           readOnly
                         />
@@ -97,7 +120,7 @@ export const PipelineProjectCard: React.FC<Props> = ({ projectId, rawIdea, statu
             </div>
           ))}
 
-          {/* Rodada ativa — editável via ElicitacaoRound */}
+          {/* Rodada ativa — editável */}
           {rodadaAtiva && !todasRespondidas && (
             <div className={styles.rodadaBlock}>
               <h4 className={styles.rodadaTitle}>Rodada {rodadaAtiva.numero} — responda abaixo</h4>
