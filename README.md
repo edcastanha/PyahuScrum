@@ -182,7 +182,9 @@ C4Container
 
 O backend gera embeddings (`text-embedding-004`) de cada projeto concluído e realiza busca por similaridade de cosseno em Python — preparado para Firestore Vector Search em produção:
 
-$$\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}$$
+$$
+\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}$$
+$$
 
 Os 3 projetos mais similares são injetados no prompt dos agentes — evitando repetição e enriquecendo cada spec com decisões de projetos anteriores.
 
