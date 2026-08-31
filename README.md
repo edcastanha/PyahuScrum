@@ -129,42 +129,73 @@ Falhas
 
 ```mermaid
 C4Container
-    title Pyahu Scrum - Diagrama de Containers (Homolog - ADK Hackathon)
+    title Pyahu Scrum - Containers (Homologação)
 
-    Person(user, "Gestor / Usuario", "Cria projetos, responde entrevistas, aprova escopo e baixa artefatos")
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 
-    System_Ext(gemini_api, "Google Gemini API", "gemini-3.6-flash e text-embedding-004")
-    System_Ext(firebase, "Google Firebase", "Firestore e Security Rules")
-    System_Ext(gh_oauth, "GitHub OAuth", "Autenticacao de usuarios")
+    Person(user, "Gestor / Usuário", "Cria projetos, responde entrevistas e aprova escopos")
+
+    System_Ext(gemini_api, "Google Gemini API", "Gemini e embeddings")
+    System_Ext(firebase, "Google Firebase", "Firestore e regras de segurança")
+    System_Ext(gh_oauth, "GitHub OAuth", "Autenticação")
 
     System_Boundary(pyahu, "Sistema Pyahu Scrum") {
-        Container(landing, "Landing Page", "React 18 + Remotion 4 + Firebase SDK", "Apresentacao e telemetria live via onSnapshot")
-        Container(board, "Pipeline Board", "React 18 + TypeScript + Firebase SDK", "Em Elicitacao, Em Progresso e Concluidos com onSnapshot em tempo real")
-        Container(api, "Agent Orchestrator", "FastAPI + Python 3.11", "REST endpoints e Consumer threads RabbitMQ")
-        Container(orchestrator, "OrchestratorAgent", "Google ADK 2.8 LlmAgent", "Entrevista interativa ate 4 rodadas Q1..Q5 com recomendacoes")
-        Container(artifacts, "ArtifactsAgent", "Google ADK 2.8 LlmAgent", "Gera ADRs e PRD a partir do historico de elicitacao")
-        Container(spec, "SpecAgent", "Google ADK 2.8 LlmAgent", "Gera Spec tecnica e Tickets atomicos via SequentialAgent")
-        ContainerQueue(rabbit, "RabbitMQ", "AMQP - 2 filas + DLX", "pyahu.pipeline, pyahu.elicitacao e pyahu.pipeline.dlq")
-        Container(rag, "RAG Service", "Python - cosseno in-memory", "Embeddings text-embedding-004 e busca top-3 similares")
+        Container(landing, "Landing Page", "React + Firebase", "Apresentação e telemetria")
+        Container(board, "Pipeline Board", "React + TypeScript", "Projetos e etapas do pipeline")
+
+        Container(api, "Agent Orchestrator", "FastAPI + Python", "API REST e consumidores")
+        ContainerQueue(rabbit, "RabbitMQ", "AMQP", "Filas do pipeline e DLX")
+
+        Container(orchestrator, "OrchestratorAgent", "Google ADK", "Entrevista e recomendações")
+        Container(artifacts, "ArtifactsAgent", "Google ADK", "Gera ADRs e PRD")
+        Container(spec, "SpecAgent", "Google ADK", "Gera especificação e tickets")
+
+        Container(rag, "RAG Service", "Python", "Embeddings e busca semântica")
     }
 
-    Rel(user, landing, "Acessa /", "HTTPS")
-    Rel(user, board, "Acessa /pipeline e interage", "HTTPS")
-    Rel(board, api, "POST /projects /respostas /aprovar /revisao DELETE /{id}", "REST HTTPS")
-    Rel(api, rabbit, "Publica mensagens", "AMQP")
-    Rel(rabbit, api, "Consumer consome", "AMQP")
-    Rel(api, orchestrator, "run_orchestrator_round_sync", "ADK Python SDK")
-    Rel(api, artifacts, "SequentialAgent pos-aprovacao", "ADK Python SDK")
-    Rel(artifacts, spec, "output_key para input", "ADK SequentialAgent")
-    Rel(orchestrator, gemini_api, "gerar_elicitacao e gerar_resumo", "HTTPS")
-    Rel(artifacts, gemini_api, "generate_content ADRs e PRD", "HTTPS")
-    Rel(spec, gemini_api, "generate_content Spec e Tickets", "HTTPS")
-    Rel(rag, gemini_api, "text-embedding-004", "HTTPS")
-    Rel(api, firebase, "Le e grava projects e elicitacao", "Firestore SDK")
-    Rel(rag, firebase, "Salva embeddings e busca similares", "Firestore SDK")
-    Rel(landing, firebase, "onSnapshot telemetria", "Firebase SDK")
-    Rel(board, firebase, "onSnapshot projetos e rodadas", "Firebase SDK")
-    Rel(board, gh_oauth, "Login OAuth", "HTTPS")
+    Rel_D(user, landing, "Acessa", "HTTPS")
+    Rel_D(user, board, "Usa", "HTTPS")
+    Rel_D(board, api, "Envia comandos", "REST")
+    Rel_D(board, gh_oauth, "Autentica", "OAuth")
+
+    Rel_R(api, rabbit, "Publica", "AMQP")
+    Rel_L(rabbit, api, "Consome", "AMQP")
+
+    Rel_D(api, orchestrator, "Executa entrevista", "ADK")
+    Rel_D(api, artifacts, "Gera artefatos", "ADK")
+    Rel_R(artifacts, spec, "Encadeia saída", "ADK")
+
+    Rel_D(orchestrator, gemini_api, "Consulta modelo", "HTTPS")
+    Rel_D(artifacts, gemini_api, "Gera ADR e PRD", "HTTPS")
+    Rel_D(spec, gemini_api, "Gera spec e tickets", "HTTPS")
+    Rel_D(rag, gemini_api, "Gera embeddings", "HTTPS")
+
+    Rel_D(api, firebase, "Persiste projetos", "Firestore")
+    Rel_D(rag, firebase, "Persiste embeddings", "Firestore")
+    Rel_L(landing, firebase, "Recebe telemetria", "onSnapshot")
+    Rel_L(board, firebase, "Recebe atualizações", "onSnapshot")
+
+    UpdateRelStyle(user, landing, $offsetX="-35", $offsetY="-20")
+    UpdateRelStyle(user, board, $offsetX="35", $offsetY="20")
+    UpdateRelStyle(board, api, $offsetY="-30")
+    UpdateRelStyle(board, gh_oauth, $offsetY="35")
+
+    UpdateRelStyle(api, rabbit, $offsetY="-25")
+    UpdateRelStyle(rabbit, api, $offsetY="25")
+
+    UpdateRelStyle(api, orchestrator, $offsetX="-35", $offsetY="-20")
+    UpdateRelStyle(api, artifacts, $offsetX="35", $offsetY="20")
+    UpdateRelStyle(artifacts, spec, $offsetY="-25")
+
+    UpdateRelStyle(orchestrator, gemini_api, $offsetX="-45", $offsetY="-25")
+    UpdateRelStyle(artifacts, gemini_api, $offsetX="20", $offsetY="20")
+    UpdateRelStyle(spec, gemini_api, $offsetX="55", $offsetY="35")
+    UpdateRelStyle(rag, gemini_api, $offsetX="-35", $offsetY="35")
+
+    UpdateRelStyle(api, firebase, $offsetX="-35", $offsetY="-25")
+    UpdateRelStyle(rag, firebase, $offsetX="35", $offsetY="25")
+    UpdateRelStyle(landing, firebase, $offsetX="-45", $offsetY="25")
+    UpdateRelStyle(board, firebase, $offsetX="45", $offsetY="-25")
 ```
 
 ### Tabela de estados do pipeline
