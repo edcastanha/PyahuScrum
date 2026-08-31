@@ -129,58 +129,42 @@ Falhas
 
 ```mermaid
 C4Container
-    title Pyahu Scrum — Diagrama de Containers (Homolog · ADK Hackathon)
+    title Pyahu Scrum - Diagrama de Containers (Homolog - ADK Hackathon)
 
-    Person(user, "Gestor / Usuário", "Cria projetos · responde entrevistas · aprova escopo · baixa artefatos")
+    Person(user, "Gestor / Usuario", "Cria projetos, responde entrevistas, aprova escopo e baixa artefatos")
 
-    System_Ext(gemini_api, "Google Gemini API", "gemini-3.6-flash (chat/elicitação/artefatos)\ntext-embedding-004 (RAG)")
-    System_Ext(firebase,   "Google Firebase",   "Firestore: estado + histórico de rodadas + embeddings\nSecurity Rules: leitura pública, escrita via Service Account")
-    System_Ext(gh_oauth,   "GitHub OAuth",      "Autenticação de usuários")
+    System_Ext(gemini_api, "Google Gemini API", "gemini-3.6-flash e text-embedding-004")
+    System_Ext(firebase, "Google Firebase", "Firestore e Security Rules")
+    System_Ext(gh_oauth, "GitHub OAuth", "Autenticacao de usuarios")
 
     System_Boundary(pyahu, "Sistema Pyahu Scrum") {
-
-        Container(landing, "Landing Page", "React 18 · Remotion 4 · Firebase SDK",
-            "Apresentação do produto\nAnimação SVG do pipeline (3 zonas: título · diagrama · telemetria)\nonSnapshot: telemetria live de projetos em tempo real")
-
-        Container(board, "Pipeline Board", "React 18 · TypeScript · Firebase SDK",
-            "3 páginas: Em Elicitação · Em Progresso · Concluídos\nPipelineProjectCard: histórico de rodadas · botão 🗑 delete cascade\nProgressoPage: resumo markdown HITL · aprovar · revisão · delete\nonSnapshot: atualizações em tempo real sem reload")
-
-        Container(api, "Agent Orchestrator", "FastAPI · Python 3.11 · Uvicorn",
-            "REST: POST /projects · /respostas · /aprovar · /revisao · DELETE /{id}\nConsumer threads: pyahu.pipeline + pyahu.elicitacao\nGuard de delete: _project_exists() antes de processar\nFallback ADK → google-genai direto")
-
-        Container(orchestrator, "OrchestratorAgent", "Google ADK 2.8 · LlmAgent",
-            "Entrevista interativa: até 4 rodadas de Q1..Q5 com recomendações\nGera Resumo de Escopo markdown para HITL\nFallback para _processar_rodada_fallback() se indisponível")
-
-        Container(artifacts, "ArtifactsAgent", "Google ADK 2.8 · LlmAgent",
-            "Recebe histórico completo de elicitação\nGera: ADRs (Architecture Decision Records) + PRD")
-
-        Container(spec, "SpecAgent", "Google ADK 2.8 · LlmAgent",
-            "Recebe saída do ArtifactsAgent via output_key\nGera: Spec técnica detalhada + Tickets atômicos (máx 15, ordenados)")
-
-        ContainerQueue(rabbit, "RabbitMQ", "AMQP · 2 filas + DLX",
-            "pyahu.pipeline: nova criação de projeto\npyahu.elicitacao: respostas · aprovar · revisao\npyahu.dlx → pyahu.pipeline.dlq: dead letter após 3 falhas")
-
-        Container(rag, "RAG Service", "Python · similaridade de cosseno",
-            "Gera embedding da ideia via text-embedding-004\nSalva no Firestore após CONCLUIDO\nBusca top-3 projetos similares (cosseno in-memory)\nInjecta contexto no prompt dos agentes")
+        Container(landing, "Landing Page", "React 18 + Remotion 4 + Firebase SDK", "Apresentacao e telemetria live via onSnapshot")
+        Container(board, "Pipeline Board", "React 18 + TypeScript + Firebase SDK", "Em Elicitacao, Em Progresso e Concluidos com onSnapshot em tempo real")
+        Container(api, "Agent Orchestrator", "FastAPI + Python 3.11", "REST endpoints e Consumer threads RabbitMQ")
+        Container(orchestrator, "OrchestratorAgent", "Google ADK 2.8 LlmAgent", "Entrevista interativa ate 4 rodadas Q1..Q5 com recomendacoes")
+        Container(artifacts, "ArtifactsAgent", "Google ADK 2.8 LlmAgent", "Gera ADRs e PRD a partir do historico de elicitacao")
+        Container(spec, "SpecAgent", "Google ADK 2.8 LlmAgent", "Gera Spec tecnica e Tickets atomicos via SequentialAgent")
+        ContainerQueue(rabbit, "RabbitMQ", "AMQP - 2 filas + DLX", "pyahu.pipeline, pyahu.elicitacao e pyahu.pipeline.dlq")
+        Container(rag, "RAG Service", "Python - cosseno in-memory", "Embeddings text-embedding-004 e busca top-3 similares")
     }
 
-    Rel(user,      landing,    "Acessa /",                           "HTTPS")
-    Rel(user,      board,      "Acessa /pipeline/* · interage",      "HTTPS")
-    Rel(board,     api,        "POST /projects\n/respostas · /aprovar · /revisao\nDELETE /{id}", "REST HTTPS")
-    Rel(api,       rabbit,     "Publica mensagens",                  "AMQP")
-    Rel(rabbit,    api,        "Consumer consome",                   "AMQP")
-    Rel(api,       orchestrator, "run_orchestrator_round_sync()",    "ADK Python SDK")
-    Rel(api,       artifacts,  "SequentialAgent.run (pós-aprovação)","ADK Python SDK")
-    Rel(artifacts, spec,       "output_key → input",                 "ADK SequentialAgent")
-    Rel(orchestrator, gemini_api, "gerar_elicitacao() · gerar_resumo()", "HTTPS")
-    Rel(artifacts,   gemini_api, "generate_content(ADRs + PRD)",    "HTTPS")
-    Rel(spec,        gemini_api, "generate_content(Spec + Tickets)", "HTTPS")
-    Rel(rag,         gemini_api, "text-embedding-004",               "HTTPS")
-    Rel(api,       firebase,   "Lê/grava projects + elicitacao",     "Firestore SDK · SA")
-    Rel(rag,       firebase,   "Salva embeddings · busca similares", "Firestore SDK · SA")
-    Rel(landing,   firebase,   "onSnapshot telemetria",              "Firebase SDK · browser")
-    Rel(board,     firebase,   "onSnapshot projetos/rodadas",        "Firebase SDK · browser")
-    Rel(board,     gh_oauth,   "Login OAuth",                        "HTTPS")
+    Rel(user, landing, "Acessa /", "HTTPS")
+    Rel(user, board, "Acessa /pipeline e interage", "HTTPS")
+    Rel(board, api, "POST /projects /respostas /aprovar /revisao DELETE /{id}", "REST HTTPS")
+    Rel(api, rabbit, "Publica mensagens", "AMQP")
+    Rel(rabbit, api, "Consumer consome", "AMQP")
+    Rel(api, orchestrator, "run_orchestrator_round_sync", "ADK Python SDK")
+    Rel(api, artifacts, "SequentialAgent pos-aprovacao", "ADK Python SDK")
+    Rel(artifacts, spec, "output_key para input", "ADK SequentialAgent")
+    Rel(orchestrator, gemini_api, "gerar_elicitacao e gerar_resumo", "HTTPS")
+    Rel(artifacts, gemini_api, "generate_content ADRs e PRD", "HTTPS")
+    Rel(spec, gemini_api, "generate_content Spec e Tickets", "HTTPS")
+    Rel(rag, gemini_api, "text-embedding-004", "HTTPS")
+    Rel(api, firebase, "Le e grava projects e elicitacao", "Firestore SDK")
+    Rel(rag, firebase, "Salva embeddings e busca similares", "Firestore SDK")
+    Rel(landing, firebase, "onSnapshot telemetria", "Firebase SDK")
+    Rel(board, firebase, "onSnapshot projetos e rodadas", "Firebase SDK")
+    Rel(board, gh_oauth, "Login OAuth", "HTTPS")
 ```
 
 ### Tabela de estados do pipeline
