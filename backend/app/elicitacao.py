@@ -325,14 +325,37 @@ class ElicitacaoService:
         historico_anterior: list[RodadaElicitacao] | None = None,
     ) -> dict:
         historico = historico_anterior or []
-        system_prompt = _load_system_prompt()
-        prompt = _montar_prompt(idea, historico)
 
-        raw = self._get_client().gerar_elicitacao(
-            system_prompt=system_prompt,
-            prompt=prompt,
+        # ── ADK OrchestratorAgent (grill-style) ──────────────────────────────
+        from .agents.pipeline import run_orchestrator_round_sync
+        historico_json = json.dumps(
+            [
+                {
+                    "rodada": r.rodada,
+                    "perguntas": [{"id": p.id, "texto": p.texto, "opcoes": p.opcoes} for p in r.perguntas],
+                    "respostas": [{"pergunta_id": rs.pergunta_id, "opcao": rs.opcao, "texto": rs.texto} for rs in r.respostas],
+                }
+                for r in historico
+            ],
+            ensure_ascii=False,
         )
-        pronto, perguntas = _parse_resposta_gemini(raw)
+        try:
+            resultado = run_orchestrator_round_sync(project_id, idea, historico_json)
+        except Exception as exc:
+            logger.warning("ADK OrchestratorAgent falhou (%s) — fallback para google-genai direto", exc)
+            resultado = self._processar_rodada_fallback(idea, historico)
+
+        pronto = bool(resultado.get("pronto", False))
+        perguntas_raw = resultado.get("perguntas", [])
+        perguntas = [
+            Pergunta(
+                id=p.get("id", f"q{i}"),
+                texto=p.get("texto", ""),
+                opcoes=p.get("opcoes", []),
+                permite_texto=p.get("permite_texto", True),
+            )
+            for i, p in enumerate(perguntas_raw, 1)
+        ]
 
         nova_rodada = RodadaElicitacao(
             rodada=numero_rodada,
@@ -343,7 +366,6 @@ class ElicitacaoService:
         _salvar_rodada(project_id, nova_rodada)
         _atualizar_status_projeto(project_id, perguntas)
 
-        # Se Gemini sinaliza pronto OU atingiu MAX_RODADAS → gerar resumo HITL
         if pronto or numero_rodada >= MAX_RODADAS:
             historico_completo = _carregar_historico(project_id)
             return self._gerar_resumo_escopo(project_id, idea, historico_completo)
@@ -353,14 +375,20 @@ class ElicitacaoService:
             "rodada": numero_rodada,
             "pronto": pronto,
             "perguntas": [
-                {
-                    "id": p.id,
-                    "texto": p.texto,
-                    "opcoes": p.opcoes,
-                    "permite_texto": p.permite_texto,
-                }
+                {"id": p.id, "texto": p.texto, "opcoes": p.opcoes, "permite_texto": p.permite_texto}
                 for p in perguntas
             ],
+        }
+
+    def _processar_rodada_fallback(self, idea: str, historico: list[RodadaElicitacao]) -> dict:
+        """Fallback para google-genai direto quando ADK não está disponível (quota/billing)."""
+        system_prompt = _load_system_prompt()
+        prompt = _montar_prompt(idea, historico)
+        raw = self._get_client().gerar_elicitacao(system_prompt=system_prompt, prompt=prompt)
+        pronto, perguntas = _parse_resposta_gemini(raw)
+        return {
+            "pronto": pronto,
+            "perguntas": [{"id": p.id, "texto": p.texto, "opcoes": p.opcoes, "permite_texto": p.permite_texto} for p in perguntas],
         }
 
     def _gerar_resumo_escopo(
@@ -446,7 +474,10 @@ class ElicitacaoService:
         return self._gerar_resumo_escopo(project_id, idea, historico, feedback=feedback)
 
     def _gerar_artefatos(self, project_id: str, idea: str, historico: list[RodadaElicitacao]) -> dict:
-        """Gera os artefatos finais e persiste no Firestore com status CONCLUIDO."""
+        """Gera artefatos via pipeline ADK: ArtifactsAgent → SpecAgent.
+
+        Fallback para google-genai direto se ADK falhar (quota/billing).
+        """
         from .artefatos import GeneratedArtifactsV2, generate_artifacts_from_history
         from .ai_client import InvalidResponseError
 
@@ -455,18 +486,53 @@ class ElicitacaoService:
             {"status": ProjectStatus.GERANDO_ADR.value}
         )
 
+        # Recuperar resumo de escopo aprovado
+        doc = db.collection("projects").document(project_id).get()
+        resumo_escopo = (doc.to_dict() or {}).get("resumo_escopo", "")
+
+        # ── Tentar ADK SequentialAgent: ArtifactsAgent → SpecAgent ──────────
+        from .agents.pipeline import run_artifacts_pipeline_sync
+        historico_json = json.dumps(
+            [
+                {
+                    "rodada": r.rodada,
+                    "perguntas": [{"id": p.id, "texto": p.texto} for p in r.perguntas],
+                    "respostas": [{"pergunta_id": rs.pergunta_id, "opcao": rs.opcao, "texto": rs.texto} for rs in r.respostas],
+                }
+                for r in historico
+            ],
+            ensure_ascii=False,
+        )
+
+        adk_success = False
+        artefatos = None
         try:
-            artefatos = generate_artifacts_from_history(
-                idea=idea,
-                historico=historico,
-                ai_client=self._get_client(),
-            )
-        except InvalidResponseError:
-            db.collection("projects").document(project_id).update(
-                {"status": ProjectStatus.FALHA_PROCESSAMENTO.value,
-                 "failure_reason": "RESPOSTA_INVALIDA"}
-            )
-            return {"status": ProjectStatus.FALHA_PROCESSAMENTO.value}
+            resultado = run_artifacts_pipeline_sync(project_id, idea, historico_json, resumo_escopo)
+            if resultado.get("spec") or resultado.get("adrs"):
+                adk_success = True
+                artefatos = GeneratedArtifactsV2(
+                    spec=resultado.get("spec", ""),
+                    prd=resultado.get("prd", ""),
+                    adrs=resultado.get("adrs", []),
+                    tickets=resultado.get("tickets", []),
+                )
+                logger.info("ADK pipeline concluído para projeto %s", project_id)
+        except Exception as exc:
+            logger.warning("ADK ArtifactsAgent/SpecAgent falhou (%s) — usando fallback", exc)
+
+        # ── Fallback: google-genai direto ────────────────────────────────────
+        if not adk_success or artefatos is None:
+            try:
+                artefatos = generate_artifacts_from_history(
+                    idea=idea,
+                    historico=historico,
+                    ai_client=self._get_client(),
+                )
+            except InvalidResponseError:
+                db.collection("projects").document(project_id).update(
+                    {"status": ProjectStatus.FALHA_PROCESSAMENTO.value, "failure_reason": "RESPOSTA_INVALIDA"}
+                )
+                return {"status": ProjectStatus.FALHA_PROCESSAMENTO.value}
 
         db.collection("projects").document(project_id).update(
             {
@@ -480,7 +546,6 @@ class ElicitacaoService:
             }
         )
 
-        # RAG: salvar embedding da ideia para uso em projetos futuros (falha silenciosa)
         try:
             from .rag import RagService
             RagService().save_embedding(project_id=project_id, idea=idea)
