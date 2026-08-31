@@ -1,6 +1,0 @@
-[submodule ".impeccable"]
-	path = .impeccable
-	url = https://github.com/pbakaus/impeccable
-[submodule ".agents/skills"]
-	path = .agents/skills
-	url = https://github.com/mattpocock/skills.git
