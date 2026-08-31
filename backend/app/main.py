@@ -75,6 +75,7 @@ def health(response: Response) -> dict:
 
 class ProjectCreateRequest(BaseModel):
     idea: str
+    github_login: Optional[str] = None
 
 
 class RespostaInput(BaseModel):
@@ -98,7 +99,7 @@ def create_project(payload: ProjectCreateRequest) -> dict:
     Retorna imediatamente com {id, status: TRIAGEM_INICIAL}.
     O consumer processará a Rodada 1 e atualizará o Firestore para ELICITANDO.
     """
-    project_data = projects.create_project(payload.idea)
+    project_data = projects.create_project(payload.idea, github_login=payload.github_login)
     project_id = project_data["id"]
 
     messaging.publish_to_pipeline({

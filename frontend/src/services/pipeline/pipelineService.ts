@@ -12,11 +12,14 @@ export function deriveIdeaFromProject(project: Pick<Project, 'name' | 'descripti
 
 /** Cria o projeto na API e retorna {id, status: TRIAGEM_INICIAL}.
  *  O pipeline é assíncrono — o status evolui via Firestore onSnapshot. */
-export async function createPipelineRequest(idea: string): Promise<PipelineRequest> {
+export async function createPipelineRequest(
+  idea: string,
+  githubLogin?: string | null,
+): Promise<PipelineRequest> {
   const response = await fetch(`${AGENT_ORCHESTRATOR_BASE_URL}/projects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idea }),
+    body: JSON.stringify({ idea, github_login: githubLogin ?? null }),
   });
 
   if (!response.ok) {

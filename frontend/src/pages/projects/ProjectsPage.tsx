@@ -8,6 +8,7 @@ import { projectService } from '../../services/project/projectService';
 import { activityService } from '../../services/activity/activityService';
 import { createPipelineRequest, deriveIdeaFromProject, deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -15,6 +16,7 @@ const ProjectsPage: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [pipelineProjectId, setPipelineProjectId] = useState<string | null>(null);
   const { showToast } = useToast();
+  const { githubLogin } = useAuth();
 
   useEffect(() => {
     setProjects(projectService.getProjects());
@@ -61,7 +63,7 @@ const ProjectsPage: React.FC = () => {
         // Novo projeto: disparar pipeline assíncrono e abrir modal imediatamente
         if (!selectedProject) {
           try {
-            const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject));
+            const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject), githubLogin);
             // O modal abre com TRIAGEM_INICIAL e evolui via onSnapshot
             setPipelineProjectId(pipelineRequest.id);
           } catch (pipelineError) {

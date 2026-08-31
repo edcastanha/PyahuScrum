@@ -98,17 +98,10 @@ const ElicitacaoRound: React.FC<ElicitacaoRoundProps> = ({
               <div key={p.id} className={styles.enviandoPergunta}>
                 <p className={styles.enviandoTexto}>{p.texto}</p>
 
-                {p.opcoes.length > 0 && (
-                  <div className={styles.enviandoOpcoes}>
-                    {p.opcoes.map(op => (
-                      <span
-                        key={op}
-                        className={`${styles.enviandoOpcao} ${snap?.opcao === op ? styles.enviandoOpcaoSel : styles.enviandoOpcaoNao}`}
-                      >
-                        {snap?.opcao === op ? '● ' : '○ '}{op}
-                      </span>
-                    ))}
-                  </div>
+                {snap?.opcao && (
+                  <span className={styles.enviandoOpcaoSel}>
+                    ● {snap.opcao}
+                  </span>
                 )}
 
                 {p.permite_texto && snap?.texto && (

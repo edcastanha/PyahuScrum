@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { ProjectListItem, subscribeToProjectsByStatus, subscribeToProjectStatus } from '../../services/pipeline/projectStatusListener';
 import { deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
 import { AGENT_ORCHESTRATOR_BASE_URL } from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './ProgressoPage.module.css';
 
 // ── Serviços ────────────────────────────────────────────────────────────────────
@@ -209,14 +210,16 @@ const AprovacaoCard: React.FC<AprovacaoCardProps> = ({ project }) => {
 
 const ProgressoPage: React.FC = () => {
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const { githubLogin } = useAuth();
 
   useEffect(() => {
     const unsub = subscribeToProjectsByStatus(
       ['AGUARDANDO_APROVACAO_ESCOPO', 'GERANDO_ADR'],
       setProjects,
+      githubLogin,
     );
     return unsub;
-  }, []);
+  }, [githubLogin]);
 
   return (
     <div className={styles.page}>

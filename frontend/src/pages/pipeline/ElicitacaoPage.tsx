@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectListItem, subscribeToProjectsByStatus } from '../../services/pipeline/projectStatusListener';
 import PipelineProjectCard from '../../components/projects/PipelineProjectCard';
+import { useAuth } from '../../context/AuthContext';
 import styles from './PipelinePage.module.css';
 
 /**
  * Página: Em Elicitação
- * Mostra projetos em TRIAGEM_INICIAL ou ELICITANDO com histórico de rodadas ativas.
+ * Mostra apenas os projetos do usuário logado (github_login) em TRIAGEM_INICIAL ou ELICITANDO.
  */
 const ElicitacaoPage: React.FC = () => {
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const { githubLogin } = useAuth();
 
   useEffect(() => {
-    const unsub = subscribeToProjectsByStatus(['TRIAGEM_INICIAL', 'ELICITANDO'], setProjects);
+    const unsub = subscribeToProjectsByStatus(
+      ['TRIAGEM_INICIAL', 'ELICITANDO'],
+      setProjects,
+      githubLogin,
+    );
     return unsub;
-  }, []);
+  }, [githubLogin]);
 
   return (
     <div className={styles.page}>

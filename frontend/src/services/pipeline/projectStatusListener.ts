@@ -86,13 +86,18 @@ export function subscribeToProjectStatus(
   });
 }
 
-/** Assina a coleção de projetos filtrada por status. */
+/** Assina a coleção de projetos filtrada por status e opcionalmente por dono. */
 export function subscribeToProjectsByStatus(
   statuses: string[],
   onUpdate: (projects: ProjectListItem[]) => void,
+  githubLogin?: string | null,
 ): () => void {
   const db = getFirestoreClient();
-  const q = query(collection(db, 'projects'), where('status', 'in', statuses));
+  const constraints: Parameters<typeof query>[1][] = [where('status', 'in', statuses)];
+  if (githubLogin) {
+    constraints.push(where('github_login', '==', githubLogin));
+  }
+  const q = query(collection(db, 'projects'), ...constraints);
   return onSnapshot(q, snap => {
     const list: ProjectListItem[] = snap.docs.map(d => ({
       id: d.id,
