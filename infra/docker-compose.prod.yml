@@ -1,11 +1,43 @@
 name: pyahu-scrum-prod
 
+# Produção — branch: main
+# Frontend:  https://pyahuscrum.adbfn6.easypanel.host
+# API:       https://api.pyahuscrum.adbfn6.easypanel.host
+#
+# Mensageria: Google Cloud Pub/Sub (MESSAGING_BACKEND=pubsub)
+# Sem container RabbitMQ — broker gerenciado pelo GCP.
+#
+# Pré-requisitos:
+#   1. backend/.env com GEMINI_API_KEY e GOOGLE_APPLICATION_CREDENTIALS
+#   2. backend/pyahu-scrum-sa.json (Service Account com roles pubsub.publisher + pubsub.subscriber)
+#   3. Topics e subscriptions criados no GCP (ver ADR-007):
+#        gcloud pubsub topics create pyahu-pipeline
+#        gcloud pubsub topics create pyahu-elicitacao
+#        gcloud pubsub topics create pyahu-dlq
+#        gcloud pubsub subscriptions create pyahu-pipeline-sub --topic=pyahu-pipeline --dead-letter-topic=pyahu-dlq --max-delivery-attempts=5 --ack-deadline=60
+#        gcloud pubsub subscriptions create pyahu-elicitacao-sub --topic=pyahu-elicitacao --dead-letter-topic=pyahu-dlq --max-delivery-attempts=5 --ack-deadline=60
+#
+# Uso:
+#   git checkout main && git pull origin main
+#   docker compose -f infra/docker-compose.prod.yml up -d --build
+
 services:
-  frontend:
+
+  # ── Frontend — React SPA via nginx ──────────────────────────────────────────
+  pyahuscrum-frontend:
     build:
       context: ..
       dockerfile: infra/Dockerfile
       target: prod
+      args:
+        REACT_APP_AGENT_ORCHESTRATOR_URL: ${REACT_APP_AGENT_ORCHESTRATOR_URL}
+        REACT_APP_FIREBASE_API_KEY: ${REACT_APP_FIREBASE_API_KEY}
+        REACT_APP_FIREBASE_AUTH_DOMAIN: ${REACT_APP_FIREBASE_AUTH_DOMAIN}
+        REACT_APP_FIREBASE_PROJECT_ID: ${REACT_APP_FIREBASE_PROJECT_ID}
+        REACT_APP_FIREBASE_STORAGE_BUCKET: ${REACT_APP_FIREBASE_STORAGE_BUCKET}
+        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${REACT_APP_FIREBASE_MESSAGING_SENDER_ID}
+        REACT_APP_FIREBASE_APP_ID: ${REACT_APP_FIREBASE_APP_ID}
+        REACT_APP_USE_EMULATOR: "false"
     container_name: pyahuscrum-frontend
     networks:
       - easypanel
@@ -16,11 +48,43 @@ services:
       retries: 3
     labels:
       - traefik.enable=true
+      - traefik.docker.network=easypanel
       - traefik.http.routers.pyahuscrum.rule=Host(`pyahuscrum.adbfn6.easypanel.host`)
       - traefik.http.routers.pyahuscrum.entrypoints=https
       - traefik.http.routers.pyahuscrum.tls.certresolver=letsencrypt
-      - traefik.docker.network=easypanel
       - traefik.http.services.pyahuscrum.loadbalancer.server.port=80
+    restart: unless-stopped
+
+  # ── Backend — FastAPI Agent Orchestrator (Pub/Sub) ──────────────────────────
+  pyahuscrum-api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: pyahuscrum-api
+    env_file:
+      - ../backend/.env
+    environment:
+      - MESSAGING_BACKEND=pubsub
+      - GOOGLE_CLOUD_PROJECT=${REACT_APP_FIREBASE_PROJECT_ID}
+      - START_CONSUMER=true
+      - CORS_ALLOWED_ORIGINS=https://pyahuscrum.adbfn6.easypanel.host,http://localhost:3000
+    volumes:
+      - ../backend/pyahu-scrum-sa.json:/app/pyahu-scrum-sa.json:ro
+    networks:
+      - easypanel
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=easypanel
+      - traefik.http.routers.pyahuscrum-api.rule=Host(`api.pyahuscrum.adbfn6.easypanel.host`)
+      - traefik.http.routers.pyahuscrum-api.entrypoints=https
+      - traefik.http.routers.pyahuscrum-api.tls.certresolver=letsencrypt
+      - traefik.http.services.pyahuscrum-api.loadbalancer.server.port=8000
     restart: unless-stopped
 
 networks:

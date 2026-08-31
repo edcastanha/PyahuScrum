@@ -64,6 +64,10 @@ const ProjectsPage: React.FC = () => {
         if (!selectedProject) {
           try {
             const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject), githubLogin);
+            // Persiste o pipelineId no projeto local — bloqueia edição e garante cascade correto
+            const withPipeline = { ...savedProject, pipelineId: pipelineRequest.id };
+            projectService.saveProject(withPipeline);
+            setProjects(prev => prev.map(p => p.id === savedProject.id ? withPipeline : p));
             // O modal abre com TRIAGEM_INICIAL e evolui via onSnapshot
             setPipelineProjectId(pipelineRequest.id);
           } catch (pipelineError) {
@@ -83,14 +87,17 @@ const ProjectsPage: React.FC = () => {
   const handleCancel = () => setIsFormOpen(false);
 
   const handleDeleteProject = (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este projeto? Todos os artefatos gerados serão removidos.')) return;
+    if (!window.confirm('Tem certeza que deseja excluir este projeto? Todos os artefatos e rodadas de elicitação serão removidos permanentemente.')) return;
     const projectToDelete = projects.find(p => p.id === id);
     if (!projectToDelete) return;
     try {
-      // Delete cascade no backend (Firestore + subcoleções)
-      deleteProjectFromPipeline(id).catch(err =>
-        console.warn('Falha ao remover projeto no backend (cascade):', err),
-      );
+      // Delete cascade no Firestore (usa pipelineId se disponível)
+      const pipelineId = projectToDelete.pipelineId;
+      if (pipelineId) {
+        deleteProjectFromPipeline(pipelineId).catch(err =>
+          console.warn('Falha ao remover projeto no backend (cascade):', err),
+        );
+      }
       // Delete local
       projectService.deleteProject(id);
       const updated = projects.filter(p => p.id !== id);

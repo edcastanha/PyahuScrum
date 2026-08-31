@@ -33,11 +33,13 @@ _CORS_ORIGINS = [
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    connection = messaging.get_connection()
-    try:
-        messaging.declare_topology(connection.channel())
-    finally:
-        connection.close()
+    # Declara topologia apenas para RabbitMQ; Pub/Sub é infra GCP (gerenciada externamente)
+    if messaging.get_backend() == "rabbitmq":
+        connection = messaging.get_connection()
+        try:
+            messaging.declare_topology(connection.channel())
+        finally:
+            connection.close()
 
     if os.environ.get("START_CONSUMER", "false").lower() == "true":
         threading.Thread(target=consumer.start_consuming, daemon=True).start()
