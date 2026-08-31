@@ -69,72 +69,138 @@ PyahuScrum/
 
 ## ⚙️ Arquitetura
 
+### Fluxo completo
+
 ```
-Usuário cria projeto
-   ↓
-POST /projects → Firestore (TRIAGEM_INICIAL) → pyahu.pipeline (RabbitMQ)
-                                                       ↓
-                                               Consumer thread
-                                                       ↓
-                                         ADK OrchestratorAgent (Rodada 1)
-                                                       ↓
-                                         Firestore (ELICITANDO + perguntas Q1..Q5)
-                                                       ↓
-                                         onSnapshot → Frontend (cards de elicitação)
-                                                       ↓
-                                         Usuário responde → pyahu.elicitacao
-                                                       ↓
-                                         Consumer → OrchestratorAgent (próxima rodada)
-                                                       ↓ (pronto | rodada 4 | usuário força)
-                                         Gemini gera Resumo de Escopo (markdown)
-                                                       ↓
-                                         AGUARDANDO_APROVACAO_ESCOPO (HITL)
-                                         ├─ Usuário aprova → pyahu.elicitacao
-                                         │       ↓
-                                         │  SequentialAgent: ArtifactsAgent → SpecAgent
-                                         │       ↓
-                                         │  CONCLUIDO → ZIP disponível para download
-                                         └─ Usuário revisa → feedback → Gemini reanalisa
-                                                  ├─ precisa mais info → nova rodada
-                                                  └─ OK → resumo atualizado
+Usuário acessa /            →  Landing Page (React + Remotion + telemetria live)
+Usuário acessa /login       →  Autenticação GitHub OAuth
+Usuário cria projeto        →  ProjectsPage → formulário de ideia
+
+POST /projects
+  → Firestore: { status: TRIAGEM_INICIAL }
+  → RabbitMQ: pyahu.pipeline
+  → Retorno imediato 201
+
+Consumer thread (pyahu.pipeline)
+  ├─ Tenta: ADK OrchestratorAgent  (gemini-3.6-flash via Gemini API)
+  └─ Fallback automático: google-genai direto  (se quota/billing indisponível)
+  → Firestore: { status: ELICITANDO, perguntas_abertas: [Q1..Q5 + recomendações] }
+  → onSnapshot → Pipeline Board → "Em Elicitação" (card com rodadas)
+
+Usuário responde perguntas  →  POST /projects/{id}/respostas
+  → RabbitMQ: pyahu.elicitacao  (tipo: resposta)
+  → Consumer → OrchestratorAgent (próxima rodada)
+  → Repete até: pronto: true | rodada 4 | usuário força (≥ R2)
+
+OrchestratorAgent sinaliza conclusão
+  → Gemini gera Resumo de Escopo (markdown: Ideia · Requisitos · Escopo · Fora do escopo)
+  → Firestore: { status: AGUARDANDO_APROVACAO_ESCOPO, resumo_escopo: "..." }
+  → onSnapshot → Pipeline Board → "Em Progresso" (card com resumo + botões)
+
+HITL — Usuário analisa o resumo
+  ├─ ✅ Aprova   →  POST /projects/{id}/aprovar
+  │               →  RabbitMQ: pyahu.elicitacao  (tipo: aprovar)
+  │               →  Consumer → ADK SequentialAgent:
+  │                    ArtifactsAgent → gera ADRs + PRD
+  │                         ↓ output_key
+  │                    SpecAgent     → gera Spec técnica + Tickets (máx 15)
+  │               →  Firestore: { status: CONCLUIDO, artefatos: {...} }
+  │               →  RAG: embedding salvo no Firestore para contexto futuro
+  │               →  onSnapshot → Pipeline Board → "Concluídos" + botão ⬇ ZIP
+  │
+  └─ 📝 Revisão  →  POST /projects/{id}/revisao  { feedback: "..." }
+                  →  RabbitMQ: pyahu.elicitacao  (tipo: revisao)
+                  →  Consumer → Gemini analisa feedback:
+                       ├─ precisa_mais_info: true  → nova rodada (ELICITANDO)
+                       └─ precisa_mais_info: false → resumo atualizado
+
+Usuário exclui projeto      →  DELETE /projects/{id}  (botão 🗑 em qualquer página)
+  → Firestore: remove doc principal + subcoleção elicitacao/ em lotes (cascade)
+  → Consumer: guard _project_exists() — mensagens órfãs descartadas com ack
+  → onSnapshot → card removido em tempo real em todas as páginas abertas
+
+Falhas
+  → Retry automático: até 3 tentativas por mensagem
+  → pyahu.dlx → pyahu.pipeline.dlq  (Dead Letter Queue)
+  → Firestore: { status: FALHA_PROCESSAMENTO, failure_reason: "..." }
 ```
 
 ### Diagrama C4
 
 ```mermaid
 C4Container
-    title Diagrama de Containers — Pyahu Scrum
+    title Pyahu Scrum — Diagrama de Containers (Homolog · ADK Hackathon)
 
-    Person(user, "Gestor / Usuário", "Envia ideias e aprova o escopo")
-    System_Ext(gemini, "Google Gemini", "Gemini 3.6 Flash + text-embedding-004")
-    System_Ext(adk, "Google ADK 2.8", "OrchestratorAgent + ArtifactsAgent + SpecAgent")
+    Person(user, "Gestor / Usuário", "Cria projetos · responde entrevistas · aprova escopo · baixa artefatos")
 
-    System_Boundary(pyahu_scrum, "Sistema Pyahu Scrum") {
-        Container(frontend, "Pipeline Board", "React/TS + Firebase SDK", "Elicitação / Progresso / Concluídos")
-        Container(api, "Agent Orchestrator", "FastAPI + RabbitMQ Consumer", "Coordena agentes ADK")
-        ContainerDb(firestore, "Firestore", "Google Cloud Firestore", "Estado, histórico e embeddings")
-        ContainerQueue(rabbit, "RabbitMQ", "pyahu.pipeline + pyahu.elicitacao + DLQ", "Processamento assíncrono")
+    System_Ext(gemini_api, "Google Gemini API", "gemini-3.6-flash (chat/elicitação/artefatos)\ntext-embedding-004 (RAG)")
+    System_Ext(firebase,   "Google Firebase",   "Firestore: estado + histórico de rodadas + embeddings\nSecurity Rules: leitura pública, escrita via Service Account")
+    System_Ext(gh_oauth,   "GitHub OAuth",      "Autenticação de usuários")
+
+    System_Boundary(pyahu, "Sistema Pyahu Scrum") {
+
+        Container(landing, "Landing Page", "React 18 · Remotion 4 · Firebase SDK",
+            "Apresentação do produto\nAnimação SVG do pipeline (3 zonas: título · diagrama · telemetria)\nonSnapshot: telemetria live de projetos em tempo real")
+
+        Container(board, "Pipeline Board", "React 18 · TypeScript · Firebase SDK",
+            "3 páginas: Em Elicitação · Em Progresso · Concluídos\nPipelineProjectCard: histórico de rodadas · botão 🗑 delete cascade\nProgressoPage: resumo markdown HITL · aprovar · revisão · delete\nonSnapshot: atualizações em tempo real sem reload")
+
+        Container(api, "Agent Orchestrator", "FastAPI · Python 3.11 · Uvicorn",
+            "REST: POST /projects · /respostas · /aprovar · /revisao · DELETE /{id}\nConsumer threads: pyahu.pipeline + pyahu.elicitacao\nGuard de delete: _project_exists() antes de processar\nFallback ADK → google-genai direto")
+
+        Container(orchestrator, "OrchestratorAgent", "Google ADK 2.8 · LlmAgent",
+            "Entrevista interativa: até 4 rodadas de Q1..Q5 com recomendações\nGera Resumo de Escopo markdown para HITL\nFallback para _processar_rodada_fallback() se indisponível")
+
+        Container(artifacts, "ArtifactsAgent", "Google ADK 2.8 · LlmAgent",
+            "Recebe histórico completo de elicitação\nGera: ADRs (Architecture Decision Records) + PRD")
+
+        Container(spec, "SpecAgent", "Google ADK 2.8 · LlmAgent",
+            "Recebe saída do ArtifactsAgent via output_key\nGera: Spec técnica detalhada + Tickets atômicos (máx 15, ordenados)")
+
+        ContainerQueue(rabbit, "RabbitMQ", "AMQP · 2 filas + DLX",
+            "pyahu.pipeline: nova criação de projeto\npyahu.elicitacao: respostas · aprovar · revisao\npyahu.dlx → pyahu.pipeline.dlq: dead letter após 3 falhas")
+
+        Container(rag, "RAG Service", "Python · similaridade de cosseno",
+            "Gera embedding da ideia via text-embedding-004\nSalva no Firestore após CONCLUIDO\nBusca top-3 projetos similares (cosseno in-memory)\nInjecta contexto no prompt dos agentes")
     }
 
-    Rel_D(user, frontend, "Acessa", "HTTPS")
-    Rel_D(frontend, api, "POST /projects, /respostas, /aprovar, /revisao", "REST")
-    Rel_D(api, rabbit, "Publica mensagem", "AMQP")
-    Rel_D(rabbit, api, "Consumer consome", "AMQP")
-    Rel_D(api, adk, "Executa agentes", "Python SDK")
-    Rel_D(adk, gemini, "Elicitação + geração de artefatos", "gRPC")
-    Rel_D(api, firestore, "Lê e grava", "SDK")
-    Rel_L(firestore, frontend, "onSnapshot em tempo real", "Firebase SDK")
+    Rel(user,      landing,    "Acessa /",                           "HTTPS")
+    Rel(user,      board,      "Acessa /pipeline/* · interage",      "HTTPS")
+    Rel(board,     api,        "POST /projects\n/respostas · /aprovar · /revisao\nDELETE /{id}", "REST HTTPS")
+    Rel(api,       rabbit,     "Publica mensagens",                  "AMQP")
+    Rel(rabbit,    api,        "Consumer consome",                   "AMQP")
+    Rel(api,       orchestrator, "run_orchestrator_round_sync()",    "ADK Python SDK")
+    Rel(api,       artifacts,  "SequentialAgent.run (pós-aprovação)","ADK Python SDK")
+    Rel(artifacts, spec,       "output_key → input",                 "ADK SequentialAgent")
+    Rel(orchestrator, gemini_api, "gerar_elicitacao() · gerar_resumo()", "HTTPS")
+    Rel(artifacts,   gemini_api, "generate_content(ADRs + PRD)",    "HTTPS")
+    Rel(spec,        gemini_api, "generate_content(Spec + Tickets)", "HTTPS")
+    Rel(rag,         gemini_api, "text-embedding-004",               "HTTPS")
+    Rel(api,       firebase,   "Lê/grava projects + elicitacao",     "Firestore SDK · SA")
+    Rel(rag,       firebase,   "Salva embeddings · busca similares", "Firestore SDK · SA")
+    Rel(landing,   firebase,   "onSnapshot telemetria",              "Firebase SDK · browser")
+    Rel(board,     firebase,   "onSnapshot projetos/rodadas",        "Firebase SDK · browser")
+    Rel(board,     gh_oauth,   "Login OAuth",                        "HTTPS")
 ```
 
-### RAG — Recuperação de Histórico
+### Tabela de estados do pipeline
 
-O backend gera embeddings (`text-embedding-004`) dos projetos concluídos e realiza busca por similaridade de cosseno em Python:
+| Status | Quem define | O que acontece a seguir |
+|---|---|---|
+| `TRIAGEM_INICIAL` | `POST /projects` | Consumer → OrchestratorAgent (Rodada 1) |
+| `ELICITANDO` | OrchestratorAgent | onSnapshot → card "Em Elicitação" com perguntas |
+| `AGUARDANDO_APROVACAO_ESCOPO` | Entrevista concluída | onSnapshot → card "Em Progresso" com resumo markdown |
+| `GERANDO_ADR` | Aprovação recebida | SequentialAgent: ArtifactsAgent → SpecAgent |
+| `CONCLUIDO` | SpecAgent | onSnapshot → card "Concluídos" + botão ⬇ ZIP |
+| `FALHA_PROCESSAMENTO` | 3 tentativas esgotadas | Mensagem → DLQ · card mostra erro |
+
+### RAG — Recuperação de contexto histórico
+
+O backend gera embeddings (`text-embedding-004`) de cada projeto concluído e realiza busca por similaridade de cosseno em Python — preparado para Firestore Vector Search em produção:
 
 $$\text{sim}(q,d)=\frac{q\cdot d}{\|q\|\|d\|}$$
 
-O contexto histórico é injetado no prompt dos agentes — cada artefato gerado leva em conta projetos anteriores similares.
-
----
+Os 3 projetos mais similares são injetados no prompt dos agentes — evitando repetição e enriquecendo cada spec com decisões de projetos anteriores.
 
 ## 🛠️ Stack
 
