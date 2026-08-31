@@ -69,7 +69,7 @@ const FLOW_STEPS: FlowStep[] = [
     num: '03',
     icon: '🤖',
     title: 'OrchestratorAgent elicita',
-    desc: 'Até 4 rodadas de perguntas estruturadas Q1..Q5 com ➡️ recomendações — estilo Grill-Me (Matt Pocock).',
+    desc: 'Até 4 rodadas de perguntas estruturadas Q1..Q5 com ➡️ recomendações — entrevista interativa com o Gemini.',
     color: '#7c6af7',
     badge: 'ADK',
   },
@@ -272,7 +272,7 @@ const LandingPage: React.FC = () => {
             icon="🤖"
             name="OrchestratorAgent"
             role="LlmAgent · Elicitação"
-            desc="Conduz rounds de perguntas estruturadas Q1..Q5 com ➡️ recomendações, no estilo /grilling de Matt Pocock. Máximo de 4 rodadas, sinaliza pronto: true quando tem contexto suficiente."
+            desc="Conduz rounds de perguntas estruturadas Q1..Q5 com ➡️ recomendações — entrevista interativa com o Gemini. Máximo de 4 rodadas, sinaliza pronto: true quando tem contexto suficiente."
             color="#7c6af7"
           />
           <AgentCard
