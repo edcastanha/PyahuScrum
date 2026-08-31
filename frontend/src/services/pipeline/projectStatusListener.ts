@@ -26,7 +26,7 @@ export interface PipelineStatusUpdate {
   }>;
   rodada_atual?: number;
   pronto?: boolean;
-  resumo_escopo?: string;       // gerado pelo Gemini em AGUARDANDO_APROVACAO_ESCOPO
+  resumo_escopo?: string;
   artefatos?: {
     spec?: string;
     prd?: string;
@@ -98,6 +98,27 @@ export function subscribeToProjectsByStatus(
     constraints.push(where('github_login', '==', githubLogin));
   }
   const q = query(collection(db, 'projects'), ...constraints);
+  return onSnapshot(q, snap => {
+    const list: ProjectListItem[] = snap.docs.map(d => ({
+      id: d.id,
+      raw_idea: (d.data()['raw_idea'] as string) || '(sem descrição)',
+      status: (d.data()['status'] as string) || '',
+    }));
+    onUpdate(list);
+  });
+}
+
+/** Assina TODOS os projetos de um owner (qualquer status) via Firestore onSnapshot.
+ *  Fonte de verdade para a ProjectsPage — elimina dependência do localStorage. */
+export function subscribeToAllProjectsByOwner(
+  githubLogin: string,
+  onUpdate: (projects: ProjectListItem[]) => void,
+): () => void {
+  const db = getFirestoreClient();
+  const q = query(
+    collection(db, 'projects'),
+    where('github_login', '==', githubLogin),
+  );
   return onSnapshot(q, snap => {
     const list: ProjectListItem[] = snap.docs.map(d => ({
       id: d.id,

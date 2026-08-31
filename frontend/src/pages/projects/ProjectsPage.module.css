@@ -1,3 +1,105 @@
 .container {
   padding: 2rem;
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #e0e0e0);
+}
+
+.addButton {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent, #7c6af7);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.addButton:hover { background: var(--accent-hover, #6a58e0); }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: var(--surface-2, #1e1e2e);
+  border: 1px solid var(--border, #2a2a3e);
+  border-radius: 10px;
+  padding: 14px 18px;
+  transition: box-shadow 0.2s, opacity 0.3s;
+}
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+
+.cardDeletando {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cardIdea {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  line-height: 1.4;
+}
+
+.statusBadge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--surface-3, #2a2a3e);
+  color: var(--text-muted, #aaa);
+  font-weight: 600;
+}
+
+.deleteBtn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: transparent;
+  color: #f87171;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.deleteBtn:hover { background: rgba(248, 113, 113, 0.12); }
+.deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.empty {
+  color: var(--text-muted, #888);
+  font-size: 0.88rem;
+  margin-top: 1rem;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--accent, #7c6af7);
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  text-decoration: underline;
+}

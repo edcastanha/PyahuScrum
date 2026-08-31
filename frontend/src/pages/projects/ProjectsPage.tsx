@@ -1,141 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import ProjectList from '../../components/projects/ProjectList';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './ProjectsPage.module.css';
 import ProjectForm from '../../components/projects/ProjectForm';
 import PipelineStatusModal from '../../components/projects/PipelineStatusModal';
 import { Project } from '../../entities/Project';
-import { projectService } from '../../services/project/projectService';
-import { activityService } from '../../services/activity/activityService';
-import { createPipelineRequest, deriveIdeaFromProject, deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
+import { ProjectListItem, subscribeToAllProjectsByOwner } from '../../services/pipeline/projectStatusListener';
+import { createPipelineRequest, deleteProjectFromPipeline } from '../../services/pipeline/pipelineService';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 
+const STATUS_LABEL: Record<string, string> = {
+  TRIAGEM_INICIAL: '⏳ Na fila',
+  ELICITANDO: '💬 Em elicitação',
+  AGUARDANDO_APROVACAO_ESCOPO: '🔍 Aguardando aprovação',
+  GERANDO_ADR: '⚙️ Gerando documentação',
+  CONCLUIDO: '✅ Concluído',
+  FALHA_PROCESSAMENTO: '❌ Falha',
+  FALHA_DLQ: '🚨 Falha crítica',
+};
+
+/**
+ * ProjectsPage — Firestore é a única fonte de verdade.
+ * Nenhum dado de projeto é gravado no localStorage.
+ * O delete cascade usa o ID do Firestore diretamente.
+ */
 const ProjectsPage: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [pipelineProjectId, setPipelineProjectId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { showToast } = useToast();
   const { githubLogin } = useAuth();
 
+  // ── Fonte de verdade: Firestore via onSnapshot ──────────────────────────────
   useEffect(() => {
-    setProjects(projectService.getProjects());
-  }, []);
+    if (!githubLogin) return;
+    const unsub = subscribeToAllProjectsByOwner(githubLogin, setProjects);
+    return unsub;
+  }, [githubLogin]);
 
-  const handleAddProject = () => {
-    setSelectedProject(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditProject = (project: Project) => {
-    setSelectedProject(project);
-    setIsFormOpen(true);
-  };
-
-  const handleSaveProject = async (project: Project) => {
+  // ── Criar novo projeto — direto no pipeline, sem localStorage ───────────────
+  const handleSaveProject = useCallback(async (project: Project) => {
+    const idea = `${project.name}: ${project.description}`;
     try {
-      const savedProject = projectService.saveProject(project);
-      const isNewProject = !selectedProject;
-
-      if (selectedProject) {
-        const updated = projects.map(p => p.id === savedProject.id ? savedProject : p);
-        setProjects(updated);
-        activityService.addActivity({
-          type: 'project_updated',
-          entityId: savedProject.id,
-          entityName: savedProject.name,
-          message: 'Projeto atualizado',
-        });
-        showToast('success', `Projeto "${savedProject.name}" atualizado com sucesso!`);
-        window.dispatchEvent(new CustomEvent('projectsUpdated', { detail: { projects: updated } }));
-      } else {
-        const updated = [...projects, savedProject];
-        setProjects(updated);
-        activityService.addActivity({
-          type: 'project_created',
-          entityId: savedProject.id,
-          entityName: savedProject.name,
-          message: 'Novo projeto criado',
-        });
-        showToast('success', `Projeto "${savedProject.name}" criado! Gerando documentação...`);
-        window.dispatchEvent(new CustomEvent('projectsUpdated', { detail: { projects: updated } }));
-
-        // Novo projeto: disparar pipeline assíncrono e abrir modal imediatamente
-        if (!selectedProject) {
-          try {
-            const pipelineRequest = await createPipelineRequest(deriveIdeaFromProject(savedProject), githubLogin);
-            // Persiste o pipelineId no projeto local — bloqueia edição e garante cascade correto
-            const withPipeline = { ...savedProject, pipelineId: pipelineRequest.id };
-            projectService.saveProject(withPipeline);
-            setProjects(prev => prev.map(p => p.id === savedProject.id ? withPipeline : p));
-            // O modal abre com TRIAGEM_INICIAL e evolui via onSnapshot
-            setPipelineProjectId(pipelineRequest.id);
-          } catch (pipelineError) {
-            console.error('Erro ao acionar o Agent Orchestrator:', pipelineError);
-            showToast('error', 'Projeto salvo, mas não foi possível acionar a geração automática de artefatos.');
-          }
-        }
-      }
-
+      const pipelineRequest = await createPipelineRequest(idea, githubLogin);
+      setPipelineProjectId(pipelineRequest.id);
       setIsFormOpen(false);
-    } catch (error) {
-      console.error('Erro ao salvar projeto:', error);
-      showToast('error', 'Erro ao salvar projeto. Tente novamente.');
+      showToast('success', 'Projeto enviado ao pipeline! Acompanhe o progresso abaixo.');
+    } catch (err) {
+      console.error('Erro ao criar projeto:', err);
+      showToast('error', 'Não foi possível criar o projeto. Tente novamente.');
     }
-  };
+  }, [githubLogin, showToast]);
 
-  const handleCancel = () => setIsFormOpen(false);
+  // ── Excluir projeto — cascade no Firestore via ID direto ────────────────────
+  const handleDelete = useCallback(async (projectId: string, rawIdea: string) => {
+    if (!window.confirm(
+      `Excluir este projeto?\n\n"${rawIdea.substring(0, 80)}"\n\nTodos os artefatos e rodadas de elicitação serão removidos permanentemente.`
+    )) return;
 
-  const handleDeleteProject = (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este projeto? Todos os artefatos e rodadas de elicitação serão removidos permanentemente.')) return;
-    const projectToDelete = projects.find(p => p.id === id);
-    if (!projectToDelete) return;
+    setDeletingId(projectId);
     try {
-      // Delete cascade no Firestore (usa pipelineId se disponível)
-      const pipelineId = projectToDelete.pipelineId;
-      if (pipelineId) {
-        deleteProjectFromPipeline(pipelineId).catch(err =>
-          console.warn('Falha ao remover projeto no backend (cascade):', err),
-        );
-      }
-      // Delete local
-      projectService.deleteProject(id);
-      const updated = projects.filter(p => p.id !== id);
-      setProjects(updated);
-      activityService.addActivity({
-        type: 'project_updated',
-        entityId: id,
-        entityName: projectToDelete.name,
-        message: 'Projeto excluído',
-      });
-      window.dispatchEvent(new CustomEvent('projectsUpdated', { detail: { projects: updated } }));
-      showToast('success', `Projeto "${projectToDelete.name}" excluído com sucesso!`);
-    } catch (error) {
-      console.error('Erro ao excluir projeto:', error);
+      await deleteProjectFromPipeline(projectId);
+      // onSnapshot remove o card automaticamente quando o doc sumir do Firestore
+      showToast('success', 'Projeto excluído com sucesso!');
+    } catch (err) {
+      console.error('Erro ao excluir projeto:', err);
       showToast('error', 'Erro ao excluir projeto. Tente novamente.');
+      setDeletingId(null);
     }
-  };
+  }, [showToast]);
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Meus Projetos</h1>
-        <button onClick={handleAddProject} className={styles.addButton}>
-          Novo Projeto
+        <button onClick={() => setIsFormOpen(true)} className={styles.addButton}>
+          + Novo Projeto
         </button>
       </div>
-      <ProjectList
-        projects={projects}
-        onEdit={handleEditProject}
-        onDelete={handleDeleteProject}
-      />
+
+      {projects.length === 0 && (
+        <p className={styles.empty}>
+          Nenhum projeto ainda.{' '}
+          <button className={styles.linkBtn} onClick={() => setIsFormOpen(true)}>
+            Criar o primeiro projeto
+          </button>
+        </p>
+      )}
+
+      <div className={styles.list}>
+        {projects.map(p => (
+          <div
+            key={p.id}
+            className={`${styles.card} ${deletingId === p.id ? styles.cardDeletando : ''}`}
+          >
+            <div className={styles.cardHeader}>
+              <div>
+                <p className={styles.cardIdea}>{p.raw_idea}</p>
+                <span className={styles.statusBadge}>{STATUS_LABEL[p.status] ?? p.status}</span>
+              </div>
+              <button
+                className={styles.deleteBtn}
+                onClick={() => handleDelete(p.id, p.raw_idea)}
+                disabled={deletingId === p.id}
+                title="Excluir projeto e todos os artefatos"
+              >
+                {deletingId === p.id ? '⏳' : '🗑'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {isFormOpen && (
         <ProjectForm
-          project={selectedProject}
+          project={null}
           onSave={handleSaveProject}
-          onCancel={handleCancel}
+          onCancel={() => setIsFormOpen(false)}
         />
       )}
+
       {pipelineProjectId && (
         <PipelineStatusModal
           projectId={pipelineProjectId}
