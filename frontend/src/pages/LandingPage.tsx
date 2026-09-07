@@ -4,10 +4,175 @@ import { PipelineAnimation } from '../components/landing/PipelineAnimation';
 import { subscribeToProjectsByStatus } from '../services/pipeline/projectStatusListener';
 import styles from './LandingPage.module.css';
 
+// ── i18n ────────────────────────────────────────────────────────────────────
+
+type Lang = 'pt' | 'en' | 'es';
+
+const I18N = {
+  pt: {
+    navFluxo: 'Fluxo',
+    navAgentes: 'Agentes',
+    navTelemetria: 'Telemetria',
+    navCta: 'Acessar app →',
+    heroBadge: '🏆 Google ADK Hackathon · Categoria Taskmaster',
+    heroTitle1: 'Da ideia ao código',
+    heroTitle2: 'em minutos, não semanas',
+    heroSub: '3 agentes Google ADK colaborando para transformar qualquer ideia em spec técnica, ADRs, PRD e tickets de desenvolvimento — via elicitação interativa com o Gemini.',
+    ctaPrimary: 'Criar meu primeiro projeto →',
+    ctaSecondary: 'Ver como funciona',
+    statElicitando: 'Em elicitação',
+    statProgresso: 'Em progresso',
+    statConcluido: 'Concluídos',
+    videoTag: 'Visualização do Pipeline',
+    videoTitle: 'Do input ao artefato — em tempo real',
+    videoSub: 'Cada nó representa um componente real do sistema. As setas mostram o fluxo de dados entre os agentes ADK, o RabbitMQ e o Firestore.',
+    flowTag: 'Fluxo Detalhado',
+    flowTitle: '7 passos, 3 agentes, 1 ZIP',
+    agentsTag: 'Multi-Agentes ADK 2.8',
+    agentsTitle: '3 especialistas, 1 pipeline',
+    agentsSub: 'Cada agente tem uma responsabilidade isolada e um output key definido no ADK. O SequentialAgent orquestra a colaboração.',
+    telTag: 'Telemetria ao vivo · Firestore',
+    telTitle: 'Estado do sistema agora',
+    telSub: 'Dados reais do Firestore via onSnapshot — atualizam sem recarregar.',
+    telElicitando: 'Em Elicitação',
+    telProgresso: 'Em Progresso',
+    telConcluido: 'Concluídos',
+    telDescElicitando: 'aguardando respostas do usuário',
+    telDescProgresso: 'aguardando aprovação ou gerando docs',
+    telDescConcluido: 'artefatos disponíveis para download',
+    ctaFinalTitle: 'Pronto para acelerar seu próximo projeto?',
+    ctaFinalSub: '3 agentes ADK + Gemini transformam sua ideia em documentação técnica completa.',
+    ctaFinalBtn: 'Criar meu projeto agora →',
+    footerHackathon: 'Google ADK Hackathon 2025',
+    footerCategory: 'Categoria Taskmaster',
+    footerPipeline: 'Pipeline',
+    steps: [
+      { num: '01', icon: '💡', title: 'Você descreve a ideia',           desc: 'Nome e descrição do projeto. Sem burocracia — sem formulários complexos.', color: '#f7c36a' },
+      { num: '02', icon: '🔌', title: 'API recebe e publica na fila',     desc: 'POST /projects → Firestore TRIAGEM_INICIAL → RabbitMQ pyahu.pipeline. Retorno imediato.', color: '#7c6af7', badge: 'Assíncrono' },
+      { num: '03', icon: '🤖', title: 'OrchestratorAgent elicita',        desc: 'Até 4 rodadas de perguntas Q1..Q5 com ➡️ recomendações — entrevista interativa com o Gemini.', color: '#7c6af7', badge: 'ADK' },
+      { num: '04', icon: '👤', title: 'Você revisa o escopo',             desc: 'Gemini gera um resumo markdown do projeto. Você aprova ou solicita revisão com feedback.', color: '#f87171', badge: 'HITL' },
+      { num: '05', icon: '📋', title: 'ArtifactsAgent gera ADRs + PRD',  desc: 'Architecture Decision Records e Product Requirements Doc com base no histórico completo.', color: '#22d3a0', badge: 'ADK' },
+      { num: '06', icon: '📝', title: 'SpecAgent gera Spec + Tickets',    desc: 'Especificação técnica detalhada e tickets atômicos: infra → domínio → API → frontend.', color: '#7c6af7', badge: 'ADK' },
+      { num: '07', icon: '📦', title: 'Download do ZIP',                  desc: 'spec.md + prd.md + ADRs + tickets — estrutura canônica pronta para o seu repositório.', color: '#22d3a0' },
+    ],
+    agents: [
+      { icon: '🤖', name: 'OrchestratorAgent', role: 'LlmAgent · Elicitação',   desc: 'Conduz rounds de perguntas Q1..Q5 com ➡️ recomendações. Máximo de 4 rodadas, sinaliza pronto: true quando tem contexto suficiente.', color: '#7c6af7' },
+      { icon: '📋', name: 'ArtifactsAgent',    role: 'LlmAgent · ADRs + PRD',   desc: 'Recebe o histórico completo e gera Architecture Decision Records e Product Requirements Document.', color: '#22d3a0' },
+      { icon: '📝', name: 'SpecAgent',          role: 'LlmAgent · Spec + Tickets', desc: 'Consome a saída do ArtifactsAgent e gera spec técnica + tickets atômicos (máx. 15).', color: '#f7c36a' },
+    ],
+  },
+  en: {
+    navFluxo: 'Flow',
+    navAgentes: 'Agents',
+    navTelemetria: 'Telemetry',
+    navCta: 'Open app →',
+    heroBadge: '🏆 Google ADK Hackathon · Taskmaster Category',
+    heroTitle1: 'From idea to code',
+    heroTitle2: 'in minutes, not weeks',
+    heroSub: '3 Google ADK agents collaborating to transform any idea into technical spec, ADRs, PRD and development tickets — via interactive Grill-Me elicitation with Gemini.',
+    ctaPrimary: 'Create my first project →',
+    ctaSecondary: 'See how it works',
+    statElicitando: 'In elicitation',
+    statProgresso: 'In progress',
+    statConcluido: 'Completed',
+    videoTag: 'Pipeline Visualization',
+    videoTitle: 'From input to artifact — in real time',
+    videoSub: 'Each node represents a real system component. Arrows show the data flow between ADK agents, RabbitMQ and Firestore.',
+    flowTag: 'Detailed Flow',
+    flowTitle: '7 steps, 3 agents, 1 ZIP',
+    agentsTag: 'Multi-Agent ADK 2.8',
+    agentsTitle: '3 specialists, 1 pipeline',
+    agentsSub: 'Each agent has an isolated responsibility and a defined output key in ADK. The SequentialAgent orchestrates the collaboration.',
+    telTag: 'Live Telemetry · Firestore',
+    telTitle: 'System state right now',
+    telSub: 'Real Firestore data via onSnapshot — updates without reloading.',
+    telElicitando: 'In Elicitation',
+    telProgresso: 'In Progress',
+    telConcluido: 'Completed',
+    telDescElicitando: 'waiting for user responses',
+    telDescProgresso: 'awaiting approval or generating docs',
+    telDescConcluido: 'artifacts available for download',
+    ctaFinalTitle: 'Ready to accelerate your next project?',
+    ctaFinalSub: '3 ADK agents + Gemini transform your idea into complete technical documentation.',
+    ctaFinalBtn: 'Create my project now →',
+    footerHackathon: 'Google ADK Hackathon 2025',
+    footerCategory: 'Taskmaster Category',
+    footerPipeline: 'Pipeline',
+    steps: [
+      { num: '01', icon: '💡', title: 'You describe the idea',            desc: 'Project name and description. No bureaucracy — no complex forms.', color: '#f7c36a' },
+      { num: '02', icon: '🔌', title: 'API receives and queues',          desc: 'POST /projects → Firestore TRIAGEM_INICIAL → RabbitMQ pyahu.pipeline. Immediate response.', color: '#7c6af7', badge: 'Async' },
+      { num: '03', icon: '🤖', title: 'OrchestratorAgent elicits',        desc: 'Up to 4 rounds of structured Q1..Q5 questions with ➡️ recommendations — interactive Gemini interview.', color: '#7c6af7', badge: 'ADK' },
+      { num: '04', icon: '👤', title: 'You review the scope',             desc: 'Gemini generates a markdown project summary. You approve or request revision with feedback.', color: '#f87171', badge: 'HITL' },
+      { num: '05', icon: '📋', title: 'ArtifactsAgent generates ADRs + PRD', desc: 'Architecture Decision Records and Product Requirements Doc based on the full elicitation history.', color: '#22d3a0', badge: 'ADK' },
+      { num: '06', icon: '📝', title: 'SpecAgent generates Spec + Tickets', desc: 'Detailed technical specification and atomic tickets: infra → domain → API → frontend.', color: '#7c6af7', badge: 'ADK' },
+      { num: '07', icon: '📦', title: 'Download ZIP',                     desc: 'spec.md + prd.md + ADRs + tickets — canonical structure ready for your repository.', color: '#22d3a0' },
+    ],
+    agents: [
+      { icon: '🤖', name: 'OrchestratorAgent', role: 'LlmAgent · Elicitation', desc: 'Conducts Q1..Q5 question rounds with ➡️ recommendations. Up to 4 rounds, signals ready: true when enough context is gathered.', color: '#7c6af7' },
+      { icon: '📋', name: 'ArtifactsAgent',    role: 'LlmAgent · ADRs + PRD',  desc: 'Receives the full elicitation history and generates Architecture Decision Records and Product Requirements Document.', color: '#22d3a0' },
+      { icon: '📝', name: 'SpecAgent',          role: 'LlmAgent · Spec + Tickets', desc: 'Consumes ArtifactsAgent output and generates detailed technical spec + atomic development tickets (max 15).', color: '#f7c36a' },
+    ],
+  },
+  es: {
+    navFluxo: 'Flujo',
+    navAgentes: 'Agentes',
+    navTelemetria: 'Telemetría',
+    navCta: 'Abrir app →',
+    heroBadge: '🏆 Google ADK Hackathon · Categoría Taskmaster',
+    heroTitle1: 'De la idea al código',
+    heroTitle2: 'en minutos, no semanas',
+    heroSub: '3 agentes Google ADK colaborando para transformar cualquier idea en spec técnica, ADRs, PRD y tickets de desarrollo — mediante elicitación interactiva con Gemini.',
+    ctaPrimary: 'Crear mi primer proyecto →',
+    ctaSecondary: 'Ver cómo funciona',
+    statElicitando: 'En elicitación',
+    statProgresso: 'En progreso',
+    statConcluido: 'Completados',
+    videoTag: 'Visualización del Pipeline',
+    videoTitle: 'Del input al artefacto — en tiempo real',
+    videoSub: 'Cada nodo representa un componente real del sistema. Las flechas muestran el flujo de datos entre los agentes ADK, RabbitMQ y Firestore.',
+    flowTag: 'Flujo Detallado',
+    flowTitle: '7 pasos, 3 agentes, 1 ZIP',
+    agentsTag: 'Multi-Agentes ADK 2.8',
+    agentsTitle: '3 especialistas, 1 pipeline',
+    agentsSub: 'Cada agente tiene una responsabilidad aislada y una output key definida en ADK. El SequentialAgent orquesta la colaboración.',
+    telTag: 'Telemetría en vivo · Firestore',
+    telTitle: 'Estado del sistema ahora',
+    telSub: 'Datos reales de Firestore via onSnapshot — se actualizan sin recargar.',
+    telElicitando: 'En Elicitación',
+    telProgresso: 'En Progreso',
+    telConcluido: 'Completados',
+    telDescElicitando: 'esperando respuestas del usuario',
+    telDescProgresso: 'esperando aprobación o generando docs',
+    telDescConcluido: 'artefactos disponibles para descarga',
+    ctaFinalTitle: '¿Listo para acelerar tu próximo proyecto?',
+    ctaFinalSub: '3 agentes ADK + Gemini transforman tu idea en documentación técnica completa.',
+    ctaFinalBtn: 'Crear mi proyecto ahora →',
+    footerHackathon: 'Google ADK Hackathon 2025',
+    footerCategory: 'Categoría Taskmaster',
+    footerPipeline: 'Pipeline',
+    steps: [
+      { num: '01', icon: '💡', title: 'Describes la idea',                desc: 'Nombre y descripción del proyecto. Sin burocracia — sin formularios complejos.', color: '#f7c36a' },
+      { num: '02', icon: '🔌', title: 'La API recibe y publica en cola',  desc: 'POST /projects → Firestore TRIAGEM_INICIAL → RabbitMQ pyahu.pipeline. Respuesta inmediata.', color: '#7c6af7', badge: 'Asíncrono' },
+      { num: '03', icon: '🤖', title: 'OrchestratorAgent elicita',        desc: 'Hasta 4 rondas de preguntas Q1..Q5 con ➡️ recomendaciones — entrevista interactiva con Gemini.', color: '#7c6af7', badge: 'ADK' },
+      { num: '04', icon: '👤', title: 'Revisas el alcance',               desc: 'Gemini genera un resumen markdown del proyecto. Apruebas o solicitas revisión con feedback.', color: '#f87171', badge: 'HITL' },
+      { num: '05', icon: '📋', title: 'ArtifactsAgent genera ADRs + PRD', desc: 'Architecture Decision Records y Product Requirements Doc basados en el historial completo.', color: '#22d3a0', badge: 'ADK' },
+      { num: '06', icon: '📝', title: 'SpecAgent genera Spec + Tickets',  desc: 'Especificación técnica detallada y tickets atómicos: infra → dominio → API → frontend.', color: '#7c6af7', badge: 'ADK' },
+      { num: '07', icon: '📦', title: 'Descarga el ZIP',                  desc: 'spec.md + prd.md + ADRs + tickets — estructura canónica lista para tu repositorio.', color: '#22d3a0' },
+    ],
+    agents: [
+      { icon: '🤖', name: 'OrchestratorAgent', role: 'LlmAgent · Elicitación',   desc: 'Conduce rondas de preguntas Q1..Q5 con ➡️ recomendaciones. Máximo 4 rondas, señala listo: true cuando tiene contexto suficiente.', color: '#7c6af7' },
+      { icon: '📋', name: 'ArtifactsAgent',    role: 'LlmAgent · ADRs + PRD',    desc: 'Recibe el historial completo y genera Architecture Decision Records y Product Requirements Document.', color: '#22d3a0' },
+      { icon: '📝', name: 'SpecAgent',          role: 'LlmAgent · Spec + Tickets', desc: 'Consume la salida del ArtifactsAgent y genera spec técnica + tickets atómicos (máx. 15).', color: '#f7c36a' },
+    ],
+  },
+} as const;
+
+const LANG_FLAGS: Record<Lang, string> = { pt: '🇧🇷', en: '🇺🇸', es: '🇪🇸' };
+const LANG_LABELS: Record<Lang, string> = { pt: 'PT', en: 'EN', es: 'ES' };
+
 // ── Live telemetria do Firestore ────────────────────────────────────────────
 function useLiveTelemetry() {
   const [counts, setCounts] = useState({ elicitando: 0, progresso: 0, concluido: 0 });
-
   useEffect(() => {
     const u1 = subscribeToProjectsByStatus(['TRIAGEM_INICIAL', 'ELICITANDO'], (p) =>
       setCounts((c) => ({ ...c, elicitando: p.length }))
@@ -20,7 +185,6 @@ function useLiveTelemetry() {
     );
     return () => { u1(); u2(); u3(); };
   }, []);
-
   return counts;
 }
 
@@ -39,110 +203,25 @@ function AnimatedNumber({ value }: { value: number }) {
   return <span>{display}</span>;
 }
 
-// ── Passo do fluxo ──────────────────────────────────────────────────────────
-interface FlowStep {
-  num: string;
-  icon: string;
-  title: string;
-  desc: string;
-  color: string;
-  badge?: string;
-}
-
-const FLOW_STEPS: FlowStep[] = [
-  {
-    num: '01',
-    icon: '💡',
-    title: 'Você descreve a ideia',
-    desc: 'Nome e descrição do projeto. Sem burocracia — sem formulários complexos.',
-    color: '#f7c36a',
-  },
-  {
-    num: '02',
-    icon: '🔌',
-    title: 'API recebe e publica na fila',
-    desc: 'POST /projects → Firestore TRIAGEM_INICIAL → RabbitMQ pyahu.pipeline. Retorno imediato.',
-    color: '#7c6af7',
-    badge: 'Assíncrono',
-  },
-  {
-    num: '03',
-    icon: '🤖',
-    title: 'OrchestratorAgent elicita',
-    desc: 'Até 4 rodadas de perguntas estruturadas Q1..Q5 com ➡️ recomendações — entrevista interativa com o Gemini.',
-    color: '#7c6af7',
-    badge: 'ADK',
-  },
-  {
-    num: '04',
-    icon: '👤',
-    title: 'Você revisa o escopo',
-    desc: 'Gemini gera um resumo markdown do projeto. Você aprova ou solicita revisão com feedback.',
-    color: '#f87171',
-    badge: 'HITL',
-  },
-  {
-    num: '05',
-    icon: '📋',
-    title: 'ArtifactsAgent gera ADRs + PRD',
-    desc: 'Architecture Decision Records e Product Requirements Doc com base no histórico completo.',
-    color: '#22d3a0',
-    badge: 'ADK',
-  },
-  {
-    num: '06',
-    icon: '📝',
-    title: 'SpecAgent gera Spec + Tickets',
-    desc: 'Especificação técnica detalhada e tickets atômicos ordenados: infra → domínio → API → frontend.',
-    color: '#7c6af7',
-    badge: 'ADK',
-  },
-  {
-    num: '07',
-    icon: '📦',
-    title: 'Download do ZIP',
-    desc: 'spec.md + prd.md + ADRs + tickets — estrutura canônica pronta para clonar no seu repositório.',
-    color: '#22d3a0',
-  },
-];
-
-// ── Feature card ────────────────────────────────────────────────────────────
-function FeatureCard({ icon, title, desc, color }: { icon: string; title: string; desc: string; color: string }) {
-  return (
-    <div className={styles.featureCard}>
-      <div className={styles.featureIcon} style={{ background: `${color}1a`, border: `1px solid ${color}40` }}>
-        {icon}
-      </div>
-      <h3 className={styles.featureTitle}>{title}</h3>
-      <p className={styles.featureDesc}>{desc}</p>
-    </div>
-  );
-}
-
-// ── Agente card ─────────────────────────────────────────────────────────────
-function AgentCard({
-  icon, name, role, desc, color,
-}: { icon: string; name: string; role: string; desc: string; color: string }) {
-  return (
-    <div className={styles.agentCard} style={{ borderColor: `${color}30` }}>
-      <div className={styles.agentTop}>
-        <div className={styles.agentIcon} style={{ background: `${color}1a`, border: `1px solid ${color}50` }}>
-          {icon}
-        </div>
-        <div>
-          <p className={styles.agentName}>{name}</p>
-          <p className={styles.agentRole} style={{ color }}>{role}</p>
-        </div>
-      </div>
-      <p className={styles.agentDesc}>{desc}</p>
-    </div>
-  );
-}
-
 // ── Página principal ────────────────────────────────────────────────────────
 const LandingPage: React.FC = () => {
   const telemetry = useLiveTelemetry();
   const playerRef = useRef(null);
+  const [lang, setLang] = useState<Lang>(() => {
+    const saved = localStorage.getItem('pyahu_lang') as Lang | null;
+    if (saved && ['pt', 'en', 'es'].includes(saved)) return saved;
+    const browser = navigator.language.slice(0, 2).toLowerCase();
+    if (browser === 'es') return 'es';
+    if (browser === 'en') return 'en';
+    return 'pt';
+  });
+
+  const t = I18N[lang];
+
+  const switchLang = (l: Lang) => {
+    setLang(l);
+    localStorage.setItem('pyahu_lang', l);
+  };
 
   return (
     <div className={styles.page}>
@@ -153,38 +232,48 @@ const LandingPage: React.FC = () => {
           <span>Pyahu Scrum</span>
         </div>
         <div className={styles.navLinks}>
-          <a href="#fluxo">Fluxo</a>
-          <a href="#agentes">Agentes</a>
-          <a href="#telemetria">Telemetria</a>
+          <a href="#fluxo">{t.navFluxo}</a>
+          <a href="#agentes">{t.navAgentes}</a>
+          <a href="#telemetria">{t.navTelemetria}</a>
         </div>
-        <a href="/login" className={styles.navCta}>Acessar app →</a>
+        <div className={styles.navRight}>
+          {/* Seletor de idioma */}
+          <div className={styles.langSwitcher}>
+            {(['pt', 'en', 'es'] as Lang[]).map((l) => (
+              <button
+                key={l}
+                className={`${styles.langBtn} ${lang === l ? styles.langBtnActive : ''}`}
+                onClick={() => switchLang(l)}
+                title={l === 'pt' ? 'Português' : l === 'en' ? 'English' : 'Español'}
+              >
+                {LANG_FLAGS[l]} {LANG_LABELS[l]}
+              </button>
+            ))}
+          </div>
+          <a href="/login" className={styles.navCta}>{t.navCta}</a>
+        </div>
       </nav>
 
       {/* ── Hero ── */}
       <section className={styles.hero}>
         <div className={styles.heroGlow} />
-        <div className={styles.heroBadge}>
-          <span>🏆</span> Google ADK Hackathon · Categoria Taskmaster
-        </div>
+        <div className={styles.heroBadge}>{t.heroBadge}</div>
         <h1 className={styles.heroTitle}>
-          Da ideia ao código<br />
-          <span className={styles.heroAccent}>em minutos, não semanas</span>
+          {t.heroTitle1}<br />
+          <span className={styles.heroAccent}>{t.heroTitle2}</span>
         </h1>
-        <p className={styles.heroSub}>
-          3 agentes Google ADK colaborando para transformar qualquer ideia em spec técnica,
-          ADRs, PRD e tickets de desenvolvimento — via elicitação interativa com o Gemini.
-        </p>
+        <p className={styles.heroSub}>{t.heroSub}</p>
         <div className={styles.heroCtas}>
-          <a href="/login" className={styles.ctaPrimary}>Criar meu primeiro projeto →</a>
-          <a href="#fluxo" className={styles.ctaSecondary}>Ver como funciona</a>
+          <a href="/login" className={styles.ctaPrimary}>{t.ctaPrimary}</a>
+          <a href="#fluxo" className={styles.ctaSecondary}>{t.ctaSecondary}</a>
         </div>
 
         {/* Telemetria live */}
         <div className={styles.heroStats}>
           {[
-            { label: 'Em elicitação', value: telemetry.elicitando, color: '#7c6af7', dot: true },
-            { label: 'Em progresso', value: telemetry.progresso,  color: '#f7c36a', dot: true },
-            { label: 'Concluídos',   value: telemetry.concluido,  color: '#22d3a0', dot: false },
+            { label: t.statElicitando, value: telemetry.elicitando, color: '#7c6af7', dot: true },
+            { label: t.statProgresso,  value: telemetry.progresso,  color: '#f7c36a', dot: true },
+            { label: t.statConcluido,  value: telemetry.concluido,  color: '#22d3a0', dot: false },
           ].map((s) => (
             <div key={s.label} className={styles.heroStat}>
               {s.dot && <span className={styles.liveDot} style={{ background: s.color }} />}
@@ -201,15 +290,12 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Vídeo Remotion — Pipeline Animado ── */}
+      {/* ── Vídeo Remotion ── */}
       <section id="fluxo" className={styles.videoSection}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Visualização do Pipeline</span>
-          <h2 className={styles.sectionTitle}>Do input ao artefato — em tempo real</h2>
-          <p className={styles.sectionSub}>
-            Cada nó representa um componente real do sistema. As setas mostram o fluxo de dados
-            entre os agentes ADK, o RabbitMQ e o Firestore.
-          </p>
+          <span className={styles.sectionTag}>{t.videoTag}</span>
+          <h2 className={styles.sectionTitle}>{t.videoTitle}</h2>
+          <p className={styles.sectionSub}>{t.videoSub}</p>
         </div>
         <div className={styles.playerWrapper}>
           <Player
@@ -230,11 +316,11 @@ const LandingPage: React.FC = () => {
       {/* ── Fluxo passo a passo ── */}
       <section className={styles.flowSection}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Fluxo Detalhado</span>
-          <h2 className={styles.sectionTitle}>7 passos, 3 agentes, 1 ZIP</h2>
+          <span className={styles.sectionTag}>{t.flowTag}</span>
+          <h2 className={styles.sectionTitle}>{t.flowTitle}</h2>
         </div>
         <div className={styles.flowGrid}>
-          {FLOW_STEPS.map((step) => (
+          {t.steps.map((step) => (
             <div key={step.num} className={styles.flowStep}>
               <div className={styles.flowNum} style={{ color: step.color, borderColor: `${step.color}40` }}>
                 {step.num}
@@ -243,7 +329,7 @@ const LandingPage: React.FC = () => {
                 <div className={styles.flowHeader}>
                   <span className={styles.flowIcon}>{step.icon}</span>
                   <h3 className={styles.flowTitle}>{step.title}</h3>
-                  {step.badge && (
+                  {'badge' in step && step.badge && (
                     <span className={styles.flowBadge} style={{ background: `${step.color}20`, color: step.color, border: `1px solid ${step.color}40` }}>
                       {step.badge}
                     </span>
@@ -260,35 +346,25 @@ const LandingPage: React.FC = () => {
       {/* ── Agentes ADK ── */}
       <section id="agentes" className={styles.agentsSection}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Multi-Agentes ADK 2.8</span>
-          <h2 className={styles.sectionTitle}>3 especialistas, 1 pipeline</h2>
-          <p className={styles.sectionSub}>
-            Cada agente tem uma responsabilidade isolada e um output key definido no ADK.
-            O SequentialAgent orquestra a colaboração.
-          </p>
+          <span className={styles.sectionTag}>{t.agentsTag}</span>
+          <h2 className={styles.sectionTitle}>{t.agentsTitle}</h2>
+          <p className={styles.sectionSub}>{t.agentsSub}</p>
         </div>
         <div className={styles.agentsGrid}>
-          <AgentCard
-            icon="🤖"
-            name="OrchestratorAgent"
-            role="LlmAgent · Elicitação"
-            desc="Conduz rounds de perguntas estruturadas Q1..Q5 com ➡️ recomendações — entrevista interativa com o Gemini. Máximo de 4 rodadas, sinaliza pronto: true quando tem contexto suficiente."
-            color="#7c6af7"
-          />
-          <AgentCard
-            icon="📋"
-            name="ArtifactsAgent"
-            role="LlmAgent · ADRs + PRD"
-            desc="Recebe o histórico completo da elicitação e gera Architecture Decision Records e Product Requirements Document com base exclusivamente nas respostas do usuário."
-            color="#22d3a0"
-          />
-          <AgentCard
-            icon="📝"
-            name="SpecAgent"
-            role="LlmAgent · Spec + Tickets"
-            desc="Consome a saída do ArtifactsAgent e gera a especificação técnica detalhada e os tickets de desenvolvimento atômicos (máx. 15), ordenados: infra → domínio → API → frontend."
-            color="#f7c36a"
-          />
+          {t.agents.map((a) => (
+            <div key={a.name} className={styles.agentCard} style={{ borderColor: `${a.color}30` }}>
+              <div className={styles.agentTop}>
+                <div className={styles.agentIcon} style={{ background: `${a.color}1a`, border: `1px solid ${a.color}50` }}>
+                  {a.icon}
+                </div>
+                <div>
+                  <p className={styles.agentName}>{a.name}</p>
+                  <p className={styles.agentRole} style={{ color: a.color }}>{a.role}</p>
+                </div>
+              </div>
+              <p className={styles.agentDesc}>{a.desc}</p>
+            </div>
+          ))}
         </div>
 
         {/* Diagrama de colaboração */}
@@ -296,7 +372,7 @@ const LandingPage: React.FC = () => {
           <div className={styles.collabNode} style={{ borderColor: '#7c6af740' }}>
             <span>🤖</span><span>OrchestratorAgent</span>
           </div>
-          <div className={styles.collabArrow}>→ aprovação →</div>
+          <div className={styles.collabArrow}>→</div>
           <div className={styles.collabNode} style={{ borderColor: '#22d3a040' }}>
             <span>📋</span><span>ArtifactsAgent</span>
           </div>
@@ -314,17 +390,17 @@ const LandingPage: React.FC = () => {
       {/* ── Telemetria live ── */}
       <section id="telemetria" className={styles.telemetrySection}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Telemetria ao vivo · Firestore</span>
-          <h2 className={styles.sectionTitle}>Estado do sistema agora</h2>
+          <span className={styles.sectionTag}>{t.telTag}</span>
+          <h2 className={styles.sectionTitle}>{t.telTitle}</h2>
           <p className={styles.sectionSub}>
-            Dados reais do Firestore via <code>onSnapshot</code> — atualizam sem recarregar.
+            {t.telSub}
           </p>
         </div>
         <div className={styles.telemetryGrid}>
           {[
-            { label: 'Em Elicitação',  value: telemetry.elicitando, icon: '💬', color: '#7c6af7', desc: 'aguardando respostas do usuário' },
-            { label: 'Em Progresso',   value: telemetry.progresso,  icon: '⚙️', color: '#f7c36a', desc: 'aguardando aprovação ou gerando docs' },
-            { label: 'Concluídos',     value: telemetry.concluido,  icon: '✅', color: '#22d3a0', desc: 'artefatos disponíveis para download' },
+            { label: t.telElicitando, value: telemetry.elicitando, icon: '💬', color: '#7c6af7', desc: t.telDescElicitando },
+            { label: t.telProgresso,  value: telemetry.progresso,  icon: '⚙️', color: '#f7c36a', desc: t.telDescProgresso },
+            { label: t.telConcluido,  value: telemetry.concluido,  icon: '✅', color: '#22d3a0', desc: t.telDescConcluido },
           ].map((item) => (
             <div key={item.label} className={styles.telCard} style={{ borderColor: `${item.color}30` }}>
               <div className={styles.telIcon} style={{ background: `${item.color}15` }}>{item.icon}</div>
@@ -341,12 +417,10 @@ const LandingPage: React.FC = () => {
       {/* ── CTA final ── */}
       <section className={styles.ctaSection}>
         <div className={styles.ctaGlow} />
-        <h2 className={styles.ctaTitle}>Pronto para acelerar seu próximo projeto?</h2>
-        <p className={styles.ctaSub}>
-          3 agentes ADK + Gemini transformam sua ideia em documentação técnica completa.
-        </p>
+        <h2 className={styles.ctaTitle}>{t.ctaFinalTitle}</h2>
+        <p className={styles.ctaSub}>{t.ctaFinalSub}</p>
         <a href="/login" className={styles.ctaPrimary} style={{ fontSize: '1.1rem', padding: '16px 40px' }}>
-          Criar meu projeto agora →
+          {t.ctaFinalBtn}
         </a>
       </section>
 
@@ -355,13 +429,13 @@ const LandingPage: React.FC = () => {
         <div className={styles.footerLeft}>
           <span>⚡ Pyahu Scrum</span>
           <span className={styles.footerSep}>·</span>
-          <span>Google ADK Hackathon 2025</span>
+          <span>{t.footerHackathon}</span>
           <span className={styles.footerSep}>·</span>
-          <span>Categoria Taskmaster</span>
+          <span>{t.footerCategory}</span>
         </div>
         <div className={styles.footerRight}>
           <a href="https://github.com/edcastanha/PyahuScrum" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a href="/pipeline/elicitacao">Pipeline</a>
+          <a href="/pipeline/elicitacao">{t.footerPipeline}</a>
           <a href="https://api-homolog.pyahuscrum.adbfn6.easypanel.host/docs" target="_blank" rel="noopener noreferrer">API Docs</a>
         </div>
       </footer>

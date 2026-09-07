@@ -59,6 +59,42 @@
   transition: color 0.2s;
 }
 .navLinks a:hover { color: var(--text); }
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Language switcher ── */
+.langSwitcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+.langBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: var(--font);
+  letter-spacing: 0.03em;
+}
+.langBtn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+.langBtnActive { background: var(--accent); color: #fff; }
+.langBtnActive:hover { background: var(--accent); color: #fff; }
 .navCta {
   padding: 8px 20px;
   border-radius: 8px;
